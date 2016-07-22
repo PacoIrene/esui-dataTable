@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+    <head>
+        <meta charset="utf-8" />
+        <title>Table - ESUI Demo</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="assets/google-code-prettify/prettify.css" />
+        <link rel="stylesheet" href="assets/themes/standard.css" />
+        <link rel="stylesheet" href="assets/themes/dataTables.css" />
+        <!--[if lt IE 9]>
+        <link rel="stylesheet" href="assets/ie8.css" />
+        <![endif]-->
+    </head>
+    <body>
+        <div class="header">
+            <h1 id="branding">ESUI - Table</h1>
+        </div>
+        <div class="ui-g main-container">
+            <div id="side-bar" class="ui-u-1-5">
+                <ul id="navigator" class="ui-nav">
+                </ul>
+            </div>
+            <div id="main" class="ui-u-4-5">
+                <div class="example">
+                    <h2>Table</h2>
+                    <div data-follow-thead="myTable" class="row">
+                        <button type="button" data-ui="id:toggleDatasource;type:Button;">toggleDatasource</button>
+                        <button type="button" data-ui="id:selectAll;type:Button;">selectAll</button>
+                        <button type="button" data-ui="id:deselectAll;type:Button;">deselectAll</button>
+                        <button type="button" data-ui="id:getSelectedItems;type:Button;">getSelectedItems</button>
+                        <button type="button" data-ui="id:updateACell;type:Button;">updateACell</button>
+                        <button type="button" data-ui="id:getRow;type:Button;">getRow</button>
+                        <button type="button" data-ui="id:adjustWidth;type:Button;">adjustWidth</button>
+                        <button type="button" data-ui="id:singleSelect;type:Button;">singleSelect</button>
+                        <button type="button" data-ui="id:singleDelect;type:Button;">singleDelect</button>
+                        <button type="button" data-ui="id:updateRow;type:Button;">updateRow</button>
+                        <button type="button" data-ui="id:dispose;type:Button;">dispose</button>
+                        <button type="button" data-ui="id:disableSort;type:Button;">disableSort</button>
+                        <button type="button" data-ui="id:enableSort;type:Button;">enableSort</button>
+                        <button type="button" data-ui="id:resetSort;type:Button;">resetSort</button>
+                        <button type="button" data-ui="id:resetHead;type:Button;">resetHead</button>
+                        <button type="button" data-ui="id:resetSelectMode;type:Button;">resetSelectMode</button>
+                        <button type="button" data-ui="id:singleStyleSelect;type:Button;">singleStyleSelect</button>
+                        <button type="button" data-ui="id:multiStyleSelect;type:Button;">multiStyleSelect</button>
+                        <button type="button" data-ui="id:clearSelect;type:Button;">clearSelect</button>
+                        <button type="button" data-ui="id:resetWidth;type:Button;">resetWidth</button>
+                        <button type="button" data-ui="id:changeFields;type:Button;">changeFields</button>
+                <h2>Table</h2>
+                <div class="example">
+                    <div
+                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:false;ajaxUrl:../url/ajax;ajaxMethod:POST"
+                        data-ui-extension-tableedit-type="TableEdit"
+                        data-ui-extension-autosort-type="AutoSort"
+                        data-ui-auto-sort="true"
+                        data-ui-sub-entry="true"
+                        class="display"></div>
+                </div>
+                <script type="text/sample" data-refid="main-js">
+                </script>
+            </div>
+        </div>
+        <script src="assets/loader/esl.js"></script>
+        <script src="config.js"></script>
+        <script src="demo.js"></script>
+        <script src="assets/google-code-prettify/prettify.js"></script>
+        <script id="main-js">
+            var data = [
+                {id:4, name: 'meimei', sex: 1},
+                {id:6, name: '0', sex: 1},
+                {id:3, name: 'frank', sex: 1},
+                {id:2, name: 'tony', sex: 0},
+                {id:5, name: 'false', sex: 1},
+                {id:1, name: 'erik', sex: 1}
+            ];
+            var myTable = null;
+            require(
+                [
+                    'esui',
+                    'esui/Dialog',
+                    'esui/Panel',
+                    'esui/SearchBox',
+                    'esui/extension/TableEdit',
+                    'esui/extension/TableSubrow',
+                    'esui/extension/Command',
+                    'esui/extension/AutoSort',
+                    'esui/extension/CustomData',
+                    'src/DataTable',
+                ],
+                function (ui) {
+                    var fields = [
+                        {
+                            title: '推广单元ID',
+                            field: 'id' ,
+                            sortable: true,
+                            tip :'编号',
+                            resizable: true,
+                            subEntry: 1,
+                            editable: 1,
+                            editRules: {
+                                pattern: /\d/g,
+                                min: 1
+                            },
+                            editContent: function(item){
+                                return item.id;
+                            },
+                            width: 100,
+                            content: function (item) {
+                                return '<span>' + item.id + '</span>';
+                            }
+                        },
+                        {
+                            title: '推广单元名称',
+                            field: 'name' ,
+                            sortable: true,
+                            tip :'姓名',
+                            align: 'right',
+                            editable: 1,
+                            comparer : function(a, b){
+                                return a.name.localeCompare( b.name );
+                            },
+                            resizable : true,
+                            width: 100,
+                            content: function (item) {
+                                return item.name;
+                            }
+                        },
+                        {
+                            title: '状态',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '推广计划名称.',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '推广计划状态',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '目标值',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '展现',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: 'CPM',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '展现独立访客户数',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '展现频次.',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '点击',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: 'CPC',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '点击率.',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '点击独立访客数',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '消费',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '到达',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '到达率',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '二跳',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '二跳率',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '访问时长',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '直接转化',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '间接转化',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '操作',
+                            field: 'sex' ,
+                            tip :'性别',
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
+                        {
+                            title: '操作',
+                            field: 'operation',
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return '<div data-ui-type="SearchBox" data-ui-id="change' + item.id + '"></div>';
+                            }
+                        }
+                    ];
+                    var easyFields = [
+                        {
+                            title: '编号',
+                            field: 'id' ,
+                            content: function (item) {
+                                return item.id;
+                            }
+                        },
+                        {
+                            title: '姓名',
+                            field: 'name',
+                            sortable: true,
+                            content: function (item) {
+                                return item.name;
+                            }
+                        },
+                        {
+                            title: '性别',
+                            field: 'sex' ,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        }
+                    ];
+                    var lib = require('esui/lib');
+                    ui.init(document.body,{
+                        properties : {
+                            myTable: {
+                                datasource: data,
+                                fields: easyFields
+                            },
+                            table: {
+                                severSide: false,
+                                autoWidth: false,
+                                ajaxData: {
+                                    a: 1,
+                                    b: 2
+                                },
+                                datasource: data,
+                                fields: fields,
+                                foot: [
+                                    {},
+                                    {
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    },
+                                    {
+                                        align: 'right',
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    },
+                                    {
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    }
+                                ],
+                                neck: [
+                                    {},
+                                    {
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    },
+                                    {
+                                        align: 'right',
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    },
+                                    {
+                                    }
+                                ]
+                            },
+                            myTable4: {
+                                datasource: [],
+                                fields: easyFields
+                            },
+                            myTable5: {
+                                datasource: data,
+                                fields: easyFields
+                            }
+                        }
+                    });
+
+                    ui.get('toggleDatasource').onclick = function () {
+                        ui.get('table').setDatasource([
+                            {id:6, name: 'meimei', sex: 1},
+                            {id:3, name: '0', sex: 1},
+                            {id:4, name: 'frank', sex: 1}
+                        ]);
+                    };
+
+                    ui.get('selectAll').onclick = function () {
+                        ui.get('table').setAllRowSelected(1);
+                    };
+                    ui.get('deselectAll').onclick = function () {
+                        ui.get('table').setAllRowSelected(0);
+                    };
+
+                    ui.get('getSelectedItems').onclick = function () {
+                        console.log(ui.get('table').getSelectedItems());
+                    };
+
+                    ui.get('updateACell').onclick = function () {
+                        ui.get('table').setCellText('made', 1, 1, true);
+                    };
+
+                    ui.get('getRow').onclick = function () {
+                        console.log(ui.get('table').getRow(1));
+                    };
+
+                    ui.get('adjustWidth').onclick = function () {
+                        ui.get('table').adjustWidth();
+                    };
+
+                    ui.get('singleSelect').onclick = function () {
+                        ui.get('table').setRowSelected(1, true);
+                    };
+
+                    ui.get('singleDelect').onclick = function () {
+                        ui.get('table').setRowSelected(1, false);
+                    };
+
+                    ui.get('updateRow').onclick = function () {
+                        ui.get('table').updateRowAt(1, {
+                            id: 1234,
+                            name: 'more',
+                            sex: 0
+                        });
+                    };
+
+                    ui.get('dispose').onclick = function () {
+                        ui.get('table').dispose();
+                    };
+
+                    ui.get('table').initChildren();
+
+                    ui.get('table').on('beforerowupdate', function(e) {
+                        console.log(e);
+                    });
+
+                    ui.get('table').on('afterrowupdate', function(e) {
+                        console.log(e);
+                    });
+
+                    ui.get('table').on('select', function(e) {
+                        console.log(e.selectedIndex);
+                    });
+
+                    ui.get('table').on('sort', function(e) {
+                        console.log(e);
+                    });
+                    ui.get('table').on('startdrag', function(e) {
+                        console.log(e);
+                    });
+                    ui.get('table').on('dragstart', function(e) {
+                        console.log(e);
+                    });
+                    ui.get('table').on('enddrag', function(e) {
+                        console.log(e);
+                    });
+                    ui.get('table').on('dragend', function(e) {
+                        console.log(e);
+                    });
+
+                    ui.get('table').on('resize', function(e) {
+                        console.log(e);
+                    });
+
+                    ui.get('table').onsubrowopen = function (e) {
+                        this.setSubrowContent(
+                            '<span style="line-height:30px;">Hello ' + e.item.name + '</span>',
+                            e.index
+                        );
+                    };
+
+                    ui.get('table').onsubrowclose = function (e) {
+
+                    };
+
+                    ui.get('disableSort').on('click', function(e) {
+                        ui.get('table').setProperties({sortable: false});
+                    });
+
+                    ui.get('enableSort').on('click', function(e) {
+                        ui.get('table').setProperties({sortable: true});
+                    });
+
+                    ui.get('resetSort').on('click', function(e) {
+                        ui.get('table').setProperties({order: 'asc', orderBy: 'name'});
+                    });
+
+                    ui.get('resetHead').on('click', function(e) {
+                        ui.get('table').setProperties({followHead: true});
+                    });
+
+                    ui.get('resetSelectMode').on('click', function(e) {
+                        ui.get('table').setProperties({selectMode: 'line'});
+                    });
+
+                    ui.get('singleStyleSelect').on('click', function(e) {
+                        ui.get('table').setProperties({select: 'single'});
+                    });
+
+                    ui.get('multiStyleSelect').on('click', function(e) {
+                        ui.get('table').setProperties({select: 'multi'});
+                    });
+
+                    ui.get('clearSelect').on('click', function(e) {
+                        ui.get('table').setProperties({select: ''});
+                    });
+
+                    ui.get('resetWidth').on('click', function(e) {
+                        ui.get('table').setProperties({width: 300});
+                    });
+
+                    ui.get('changeFields').on('click', function (e) {
+                        ui.get('table').setProperties({
+                            fields: [
+                                {
+                                    title: '编号',
+                                    field: 'id' ,
+                                    content: function (item) {
+                                        return item.id;
+                                    }
+                                },
+                                {
+                                    title: '姓名',
+                                    field: 'name',
+                                    sortable: true,
+                                    content: function (item) {
+                                        return item.name;
+                                    }
+                                }
+                            ]
+                        });
+                    });
+                }
+            );
+        </script>
+        <script src="sitemap.js"></script>
+    </body>
+</html>
