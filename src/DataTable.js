@@ -238,10 +238,9 @@ define(
                         dataTable.row(index).child().hide();
                     });
 
-                    dataTable.on('click', 'td.column-editable span.ui-icon-pencil', function(e) {
-                        var tdNode = $(this).parent('td');
-                        var rowIndex = dataTable.row(tdNode).index();
-                        var columnIndex = dataTable.column(tdNode).index();
+                    dataTable.on('click', 'td.column-editable', function(e) {
+                        var rowIndex = dataTable.row(e.currentTarget).index();
+                        var columnIndex = dataTable.column(e.currentTarget).index();
                         if (that.select === 'multi' || that.select === 'single') {
                             actualColumnIndex = columnIndex - 1;
                         }
@@ -292,7 +291,9 @@ define(
                         paint: function (table, fields, datasource) {
                             renderFields(table, fields);
                             table.helper.initChildren(table.dataTable.table().header());
-                            table.setDatasource(table.datasource);
+                            if (!table.serverSide) {
+                                table.setDatasource(table.datasource);
+                            }
                             renderFoot(table, table.foot);
                             renderNeck(table, table.neck);
                             resetSortable(table, table.sortable);
@@ -490,7 +491,7 @@ define(
                 paging: false,
                 // fixedHeader: true,
                 // processing: true,
-                // dom: 'Zlfrtip',
+                dom: 'Zlfrtip',
                 ordering: false,
                 language: {
                     emptyTable: table.noDataHtml
@@ -499,7 +500,6 @@ define(
                 scrollBarVis: true,
                 scrollCollapse: true,
                 autoWidth: table.autoWidth,
-                rowCallback: rowCallback,
                 preDrawCallback: preDrawCallback
             };
             if (table.select) {
@@ -514,7 +514,9 @@ define(
                     type: table.ajaxMethod,
                     data: function(data) {
                         for (var key in data) {
-                            delete data[key];
+                            if (data.hasOwnProperty(key)) {
+                                delete data[key];
+                            }
                         }
                         u.extend(data, table.ajaxData)
                     }
@@ -568,11 +570,6 @@ define(
             }
         }
 
-        function rowCallback(row, data, rowIndex, colIndex) {
-            var editPencilHtml = '<span class="ui-icon ui-icon-pencil" data-row="' + rowIndex + '" data-col="' + colIndex + '"></span>';
-            $('td.column-editable', row).append(editPencilHtml);
-        }
-
         function preDrawCallback(settings) {
             if (!settings.oInit.autoWidth) {
                 $('table.dataTable', settings.nTableWrapper).css('table-layout', 'fixed');
@@ -596,9 +593,7 @@ define(
                 }
                 var align = (itemOption.align || 'left');
                 var className = 'dt-body-' + align;
-                if (type === 'foot') {
-                    className = 'dt-head-' + align;
-                }
+
                 html.push('<td ' + 'colspan=' + (itemOption.colspan || 1)
                             + ' class=' + className + '>'
                             + content
@@ -653,7 +648,7 @@ define(
                     // orderData: [],
                     className: getClassNameForColumn(field)
                 };
-                if (field.width) {
+                if (field.width && !table.autoWidth) {
                     option.width = field.width;
                 }
                 else {
@@ -672,7 +667,7 @@ define(
                 data: function() {
                     return '';
                 },
-                className: className,
+                className: table.datasource.length === 0 ? '' : className,
                 targets: 0,
                 width: '15px'
             });
@@ -709,28 +704,11 @@ define(
          */
         DataTable.defaultProperties = {
             noDataHtml: '没有数据',
-            subEntryOpenTip: '点击展开',
-            subEntryCloseTip: '点击收起',
-            noFollowHeadCache: false,
             followHead: true,
             followHeadOffset: 0,
             sortable: false,
-            encode: false,
-            columnResizable: false,
-            rowWidthOffset: -1,
             select: '',
             selectMode: 'box',
-            subrowMutex: 1,
-            subEntryWidth: 18,
-            breakLine: false,
-            hasTip: false,
-            hasSubrow: false,
-            tipWidth: 18,
-            sortWidth: 9,
-            fontSize: 13,
-            colPadding: 8,
-            zIndex: 0,
-            overflowX: 'hidden',
             subEntry: false,
             autoWidth: false,
             serverSide: false,

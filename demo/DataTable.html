@@ -104,7 +104,7 @@
                             editContent: function(item){
                                 return item.id;
                             },
-                            width: 100,
+                            width: 200,
                             content: function (item) {
                                 return '<span>' + item.id + '</span>';
                             }
@@ -435,12 +435,8 @@
                     var lib = require('esui/lib');
                     ui.init(document.body,{
                         properties : {
-                            myTable: {
-                                datasource: data,
-                                fields: easyFields
-                            },
                             table: {
-                                severSide: false,
+                                serverSide: false,
                                 autoWidth: false,
                                 ajaxData: {
                                     a: 1,
@@ -481,16 +477,11 @@
                                         }
                                     },
                                     {
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
                                     }
                                 ]
-                            },
-                            myTable4: {
-                                datasource: [],
-                                fields: easyFields
-                            },
-                            myTable5: {
-                                datasource: data,
-                                fields: easyFields
                             }
                         }
                     });
