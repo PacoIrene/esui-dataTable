@@ -281,6 +281,10 @@ define(
                                 table.setDatasource(table.datasource);
                             }
                             renderFoot(table, table.foot);
+                            // 一旦fixheader设定为true的时候，假如head的位置恰好能够fixed
+                            // 会出现neck无法显示的问题
+                            //     是因为renderNeck的方法里去找header的时候找到的其实是fixheader
+                            //     伪造的那个header 而不是原有位置上的那个header
                             // renderNeck(table, table.neck);
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
