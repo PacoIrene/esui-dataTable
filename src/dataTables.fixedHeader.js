@@ -263,7 +263,7 @@ $.extend( FixedHeader.prototype, {
 		else {
 			if ( itemDom.floating ) {
 				itemDom.placeholder.remove();
-				this._unsize( item );
+				// this._unsize( item );
 				itemDom.floating.children().detach();
 				itemDom.floating.remove();
 			}
@@ -390,7 +390,7 @@ $.extend( FixedHeader.prototype, {
 				itemDom.placeholder = null;
 			}
 
-			this._unsize( item );
+			// this._unsize( item );
 
 			if ( item === 'header' ) {
 				itemDom.host.prepend( this.dom.thead );

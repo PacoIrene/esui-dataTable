@@ -1,13 +1,3 @@
-// TODO: 
-//       2. colResize细节调研                         P4
-//       5. 扩展的兼容性问题 TableEdit                P3
-//       13.适配dataTable其余的特性                   P4
-//       16.fixedheader是造了一个假的 resize没用
-// Extend TODO:
-//       1. 代码整理 冗余代码删除
-//       2. 样式的调整 class的适配
-
-
 define(
     function (require) {
         var u = require('underscore');
@@ -19,10 +9,6 @@ define(
         var $ = require('jquery');
         var Event = require('mini-event');
         require('./dataTables');
-        require('./dataTables.fixedColumns');
-        // TODO: 要先加载colResize后加载select 否则就会导致select方法无效？
-        //       需要看一下原因
-        // require('./dataTables.colResize');
         require('./dataTables.select');
         require('./dataTables.fixedHeader');
 
@@ -295,7 +281,7 @@ define(
                                 table.setDatasource(table.datasource);
                             }
                             renderFoot(table, table.foot);
-                            renderNeck(table, table.neck);
+                            // renderNeck(table, table.neck);
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
                             resetSelect(table, table.select);
@@ -308,7 +294,7 @@ define(
                         name: ['foot', 'neck'],
                         paint: function (table, foot, neck) {
                             renderFoot(table, table.foot);
-                            renderNeck(table, table.neck);
+                            // renderNeck(table, table.neck);
                         }
                     },
                     {
@@ -489,8 +475,8 @@ define(
                 info: false,
                 searching: false,
                 paging: false,
-                // fixedHeader: true,
-                // processing: true,
+                fixedHeader: table.followHead,
+                processing: true,
                 dom: 'Zlfrtip',
                 ordering: false,
                 language: {
