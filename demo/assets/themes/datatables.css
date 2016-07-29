@@ -26,6 +26,10 @@ table.dataTable {
    * Body styles
    */
 }
+.dataTables_scrollBody thead th.select-checkbox:before,
+.dataTables_scrollFoot thead th.select-checkbox:before {
+  border: none !important;
+}
 table.dataTable thead th,
 table.dataTable tfoot th {
   font-weight: bold;

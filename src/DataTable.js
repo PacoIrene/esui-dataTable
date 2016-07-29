@@ -280,6 +280,7 @@ define(
                             if (!table.serverSide) {
                                 table.setDatasource(table.datasource);
                             }
+                            table.adjustWidth();
                             renderFoot(table, table.foot);
                             // 一旦fixheader设定为true的时候，假如head的位置恰好能够fixed
                             // 会出现neck无法显示的问题
@@ -304,6 +305,7 @@ define(
                         name: 'width',
                         paint: function (table, width) {
                             $(table.main).css('width', width);
+                            table.adjustWidth();
                             table.fire('resize');
                         }
                     },
@@ -367,7 +369,7 @@ define(
                     }
                 },
 
-                addRowBuilders: function () {},,
+                addRowBuilders: function () {},
 
                 addHandlers: function () {},
 
@@ -473,12 +475,12 @@ define(
                 //     rightColumns: 1
                 // },
                 ordering: false,
-                language: {
-                    emptyTable: table.noDataHtml
-                },
                 scrollX: true,
                 scrollBarVis: true,
                 scrollCollapse: true,
+                language: {
+                    emptyTable: table.noDataHtml
+                },
                 autoWidth: table.autoWidth,
                 preDrawCallback: preDrawCallback
             };
@@ -517,8 +519,11 @@ define(
          */
         function renderFoot(table, foot) {
             var footer = table.dataTable.table().footer();
+            $(footer).parent().find('thead').remove();
             $(footer).empty();
             if (foot) {
+                var headClone = $.clone($(table.dataTable.table().body()).parent().find('thead')[0]);
+                $(headClone).insertBefore(footer);
                 $(footer).html(getFootOrNeckHtml(table, foot, 'foot'));
                 table.dataTable.columns.adjust();
             }
