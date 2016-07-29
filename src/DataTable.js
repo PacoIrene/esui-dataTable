@@ -122,7 +122,7 @@ define(
                  */
                 adjustWidth: function () {
                     // TODO: 一旦draw了就整个重绘了 代价是不是有点大？
-                    // this.dataTable.columns.adjust().draw();
+                    this.dataTable.columns.adjust();
                 },
 
                 /**
@@ -259,8 +259,8 @@ define(
                         {preserveData: true, syncState: true}
                     );
                     this.helper.addDOMEvent(window, 'resize', u.bind(function (e) {
-                        this.adjustWidth();
-                        this.fire('resize');
+                        // this.adjustWidth();
+                        // this.fire('resize');
                     }, this));
                 },
 
@@ -291,7 +291,6 @@ define(
                             resetSelect(table, table.select);
                             resetFollowHead(table, table.followHead, table.followHeadOffset);
                             table.bindEvents();
-                            table.adjustWidth();
                         }
                     },
                     {
@@ -341,19 +340,6 @@ define(
                 ),
 
                 setSubrowContent: function (content, index) {
-                    // var subrowPanel = this.getChild('subrow-panel-' + index);
-                    // if (subrowPanel) {
-                    //     subrowPanel.setContent(content);
-                    //     this.dataTable.row(index).child().show();
-                    // }
-                    // else {
-                    //     var tpl = '<div data-ui-type="Panel" data-ui-id="subrow-panel-' + index + '" data-ui-group="subrowPanel"></div>';
-                    //     this.dataTable.row(index).child(tpl).show();
-                    //     this.initChildren(this.dataTable.row(index).child()[0]);
-                    //     subrowPanel = this.viewContext.get('subrow-panel-' + index);
-                    //     this.addChild(subrowPanel, 'subrow-panel-' + index);
-                    //     subrowPanel.setContent(content);
-                    // }
                     this.dataTable.row(index).child(content).show();
                 },
 
@@ -381,6 +367,10 @@ define(
                     }
                 },
 
+                addRowBuilders: function () {},,
+
+                addHandlers: function () {},
+
                 /**
                  * 销毁释放控件
                  *
@@ -396,9 +386,6 @@ define(
                     helper.beforeDispose();
                     this.dataTable.destroy(true);
                     this.dataTable = null;
-
-                    this.rowBuilderList = null;
-
 
                     helper.dispose();
                     helper.afterDispose();
@@ -455,7 +442,7 @@ define(
             var theads = $('th', table.dataTable.header());
             if (!sortable) {
                 theads.removeClass('sorting sorting_asc sorting_desc');
-                // return;
+                return;
             }
             u.each(table.fields, function (field, index) {
                 var actualIndex = index;
@@ -472,7 +459,7 @@ define(
             if (table.dataTable) {
                 table.dataTable.destroy(true);
             }
-            var cNode = document.createElement('table');
+            var cNode = $.parseHTML('<table><thead></thead><tfoot><tr></tr></tfoot><tbody><tbody></table>');
             $(cNode).appendTo(table.main);
             var options = {
                 columnDefs: getInfoFromField(table, fields, table.select),
@@ -481,7 +468,10 @@ define(
                 paging: false,
                 fixedHeader: table.followHead,
                 processing: true,
-                dom: 'Zlfrtip',
+                // dom: 'Zlfrtip',
+                // fixedColumns:   {
+                //     rightColumns: 1
+                // },
                 ordering: false,
                 language: {
                     emptyTable: table.noDataHtml
@@ -512,9 +502,9 @@ define(
                     }
                 }
             }
-            var dataTable = $(cNode).DataTable(options);
+            var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
             table.dataTable = dataTable;
-            // $(cNode).css('min-width', '100%');
+            $(cNode).css('width', '100%');
             $(cNode).addClass('display');
         }
 
@@ -526,16 +516,11 @@ define(
          * @return {string}
          */
         function renderFoot(table, foot) {
+            var footer = table.dataTable.table().footer();
+            $(footer).empty();
             if (foot) {
-                var footer = $('[data-role="foot"]', table.main);
-                if (footer.length === 0) {
-                    footer = document.createElement('tbody');
-                    var body = table.dataTable.table().body();
-                    $(footer).insertAfter(body);
-                    $(footer).attr('data-role', 'foot');
-                }
-                $(footer).empty();
                 $(footer).html(getFootOrNeckHtml(table, foot, 'foot'));
+                table.dataTable.columns.adjust();
             }
         }
 
@@ -655,7 +640,7 @@ define(
                 title: '',
                 orderable: false,
                 data: function() {
-                    return '';
+                    return '&nbsp&nbsp&nbsp&nbsp';
                 },
                 className: table.datasource.length === 0 ? '' : className,
                 targets: 0,
@@ -694,7 +679,7 @@ define(
          */
         DataTable.defaultProperties = {
             noDataHtml: '没有数据',
-            followHead: true,
+            followHead: false,
             followHeadOffset: 0,
             sortable: false,
             select: '',

@@ -387,19 +387,6 @@
                         },
                         {
                             title: '操作',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '操作',
                             field: 'operation',
                             resizable : true,
                             width: 120,
@@ -437,14 +424,20 @@
                         properties : {
                             table: {
                                 serverSide: false,
-                                autoWidth: false,
-                                followHead: true,
+                                autoWidth: true,
+                                followHead: false,
+                                extendOptions: {
+                                    fixedHeader: {
+                                        header: true,
+                                        footer: true
+                                    }
+                                },
                                 ajaxData: {
                                     a: 1,
                                     b: 2
                                 },
                                 datasource: data,
-                                fields: fields,
+                                fields: easyFields,
                                 foot: [
                                     {},
                                     {
@@ -600,7 +593,8 @@
                     });
 
                     ui.get('resetSelectMode').on('click', function(e) {
-                        ui.get('table').setProperties({selectMode: 'line'});
+                        var selectMode = ui.get('table').selectMode;
+                        ui.get('table').setProperties({selectMode: selectMode === 'line' ? 'box' : 'line'});
                     });
 
                     ui.get('singleStyleSelect').on('click', function(e) {
@@ -625,6 +619,7 @@
                                 {
                                     title: '编号',
                                     field: 'id' ,
+                                    width: 120,
                                     content: function (item) {
                                         return item.id;
                                     }
@@ -632,6 +627,7 @@
                                 {
                                     title: '姓名',
                                     field: 'name',
+                                    width: 120,
                                     sortable: true,
                                     content: function (item) {
                                         return item.name;
