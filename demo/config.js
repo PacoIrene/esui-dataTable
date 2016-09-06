@@ -53,6 +53,11 @@ require.config({
             'name': 'mini-event',
             'location': '../dep/mini-event/1.0.2/src',
             'main': 'main'
+        },
+        {
+            'name': 'datatables.net',
+            'location': '../src',
+            'main': 'datatables'
         }
     ]
 });

@@ -11,6 +11,7 @@ define(
         require('./dataTables');
         require('./dataTables.select');
         require('./dataTables.fixedHeader');
+        require('./dataTables.scroller');
 
         var DataTable = eoo.create(
             Control,
