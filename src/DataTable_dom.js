@@ -167,6 +167,7 @@ define(
                             };
                             var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
                             table.dataTable = dataTable;
+                            table.helper.initChildren(dataTable.table().header());
                         }
                     },
                     {
@@ -346,6 +347,11 @@ define(
 
             return className;
         }
+        function createHeadTitle(field) {
+            return field.tip ? '<div '
+                    + 'data-ui="type:Tip;content:'+ field.tip + '">'
+                    + '</div>' + field.title : field.title;
+        }
 
         function withComplexHeadHTML(fields, sortable) {
             var HeadHTML = '<thead>'
@@ -354,12 +360,12 @@ define(
             var subHtml = ['<tr>'];
             u.each(fields, function (field) {
                 if (!field.children) {
-                    html.push('<th rowspan="2" class="' + getFieldHeaderClass(sortable, field) + '">' + field.title + '</th>');
+                    html.push('<th rowspan="2" class="' + getFieldHeaderClass(sortable, field) + '">' + createHeadTitle(field) + '</th>');
                 }
                 else {
-                    html.push('<th colspan="' + field.children.length + '">' + field.title + '</th>');
+                    html.push('<th colspan="' + field.children.length + '">' + createHeadTitle(field) + '</th>');
                     u.each(field.children, function (child) {
-                        subHtml.push('<th class="' + getFieldHeaderClass(sortable, child) + '">' + child.title + '</th>');
+                        subHtml.push('<th class="' + getFieldHeaderClass(sortable, child) + '">' + createHeadTitle(child) + '</th>');
                     });
                 }
             });
@@ -376,7 +382,7 @@ define(
             var html = ['<tr>'];
             html.push('<th rowspan="1" class="select-checkbox"></th>');
             u.each(fields, function (field) {
-                html.push('<th rowspan="1" class="' + getFieldHeaderClass(sortable, field) + '">' + field.title + '</th>');
+                html.push('<th rowspan="1" class="' + getFieldHeaderClass(sortable, field) + '">' + createHeadTitle(child) + '</th>');
             });
             html.push('</tr>');
             HeadHTML += html.join('');
