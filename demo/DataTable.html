@@ -49,7 +49,7 @@
                 <h2>Table</h2>
                 <div class="example">
                     <div
-                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:false;ajaxUrl:../url/ajax;ajaxMethod:POST"
+                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
                         data-ui-auto-sort="true"
@@ -85,7 +85,7 @@
                     'esui/extension/Command',
                     'esui/extension/AutoSort',
                     'esui/extension/CustomData',
-                    'src/DataTable',
+                    'src/DataTable_dom',
                 ],
                 function (ui) {
                     var fields = [
@@ -93,7 +93,6 @@
                             title: '推广单元ID',
                             field: 'id' ,
                             sortable: true,
-                            tip :'编号',
                             resizable: true,
                             subEntry: 1,
                             editable: 1,
@@ -101,289 +100,46 @@
                                 pattern: /\d/g,
                                 min: 1
                             },
+                            tip: 'makr',
                             editContent: function(item){
                                 return item.id;
                             },
-                            width: 200,
+                            width: 100,
                             content: function (item) {
                                 return '<span>' + item.id + '</span>';
                             }
                         },
                         {
-                            title: '推广单元名称',
-                            field: 'name' ,
-                            sortable: true,
-                            tip :'姓名',
-                            align: 'right',
-                            editable: 1,
-                            comparer : function(a, b){
-                                return a.name.localeCompare( b.name );
-                            },
-                            resizable : true,
-                            width: 100,
-                            content: function (item) {
-                                return item.name;
-                            }
-                        },
-                        {
-                            title: '状态',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '推广计划名称.',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '推广计划状态',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '目标值',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '展现',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: 'CPM',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '展现独立访客户数',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '展现频次.',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '点击',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: 'CPC',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '点击率.',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '点击独立访客数',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '消费',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '到达',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '到达率',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '二跳',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '二跳率',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '访问时长',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '直接转化',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
-                        },
-                        {
-                            title: '间接转化',
-                            field: 'sex' ,
-                            tip :'性别',
-                            comparer : function(a, b){
-                                return a.sex - b.sex;
-                            },
-                            resizable : true,
-                            width: 120,
-                            content: function (item) {
-                                return item.sex ? '男' : '女';
-                            }
+                            title: '信息',
+                            children: [
+                                {
+                                    title: '推广单元名称',
+                                    field: 'name' ,
+                                    sortable: true,
+                                    align: 'right',
+                                    editable: 1,
+                                    comparer : function(a, b){
+                                        return a.name.localeCompare( b.name );
+                                    },
+                                    resizable : true,
+                                    width: 100,
+                                    content: function (item) {
+                                        return item.name;
+                                    }
+                                },
+                                {
+                                    title: '状态',
+                                    field: 'sex' ,
+                                    comparer : function(a, b){
+                                        return a.sex - b.sex;
+                                    },
+                                    resizable : true,
+                                    width: 120,
+                                    content: function (item) {
+                                        return item.sex ? '男' : '女';
+                                    }
+                                }
+                            ]
                         },
                         {
                             title: '操作',
@@ -391,7 +147,7 @@
                             resizable : true,
                             width: 120,
                             content: function (item) {
-                                return '<div data-ui-type="SearchBox" data-ui-id="change' + item.id + '"></div>';
+                                return item.id;
                             }
                         }
                     ];
@@ -420,6 +176,10 @@
                         }
                     ];
                     var lib = require('esui/lib');
+                    var newData = [];
+                    for (var i = 0; i !== 5000; i++) {
+                        newData = newData.concat(data);
+                    }
                     ui.init(document.body,{
                         properties : {
                             table: {
@@ -447,6 +207,16 @@
                                     },
                                     {
                                         align: 'right',
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    },
+                                    {
+                                        content: function (item) {
+                                            return 'item.id';
+                                        }
+                                    },
+                                    {
                                         content: function (item) {
                                             return 'item.id';
                                         }

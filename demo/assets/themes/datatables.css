@@ -611,8 +611,8 @@ div.dataTables_wrapper span.select-item {
 
 th, td {
     white-space: nowrap;
-    padding-left: 40px !important;
-    padding-right: 40px !important;
+    /*padding-left: 40px !important;
+    padding-right: 40px !important;*/
 }
 div.dataTables_wrapper {
     margin: 0 auto;
