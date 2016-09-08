@@ -134,8 +134,8 @@ define(
                 repaint: painters.createRepaint(
                     Control.prototype.repaint,
                     {
-                        name: ['fields', 'datasource', 'sortable'],
-                        paint: function (table, fields, datasource, sortable) {
+                        name: ['fields', 'datasource', 'sortable', 'foot'],
+                        paint: function (table, fields, datasource, sortable, foot) {
                             if (table.dataTable) {
                                 table.dataTable.destroy(true);
                             }
@@ -143,10 +143,11 @@ define(
                             var headHTML = isComplexHead ? withComplexHeadHTML(fields, sortable)
                                             : simpleHeadHTML(fields, sortable);
                             var bodyHTML = createColumnHTML(datasource, fields, sortable);
+                            var footHTML = createFooterHTML(foot);
                             var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
-                                        + headHTML + bodyHTML + '</table>');
+                                        + headHTML + footHTML +  bodyHTML + '</table>');
                             $(cNode).appendTo(table.main);
-                            var dataTable = $(cNode).DataTable({
+                            var options = {
                                 info: false,
                                 searching: false,
                                 paging: false,
@@ -163,7 +164,8 @@ define(
                                     emptyTable: table.noDataHtml
                                 },
                                 autoWidth: table.autoWidth
-                            });
+                            };
+                            var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
                             table.dataTable = dataTable;
                         }
                     },
@@ -253,8 +255,12 @@ define(
                 return;
             }
             u.each(table.fields, function (field, index) {
+                var actualIndex = index;
+                if (table.select === 'multi' || table.select === 'single') {
+                    actualIndex = index + 1;
+                }
                 if (field.sortable) {
-                    $(theads[index]).addClass('sorting');
+                    $(theads[actualIndex]).addClass('sorting');
                 }
             });
         }
@@ -303,9 +309,13 @@ define(
             orderBy = orderBy || table.orderBy;
             var theads = $('th', table.dataTable.table().header());
             u.each(table.fields, function (field, index) {
-                $(theads[index]).removeClass('sorting_asc sorting_desc');
+                var actualIndex = index;
+                if (table.select === 'multi' || table.select === 'single') {
+                    actualIndex = index + 1;
+                }
+                $(theads[actualIndex]).removeClass('sorting_asc sorting_desc');
                 if (field.field === orderBy && field.sortable && table.sortable) {
-                    $(theads[index]).addClass('sorting sorting_' + order);
+                    $(theads[actualIndex]).addClass('sorting sorting_' + order);
                 }
             });
         }
@@ -328,10 +338,10 @@ define(
             };
         }
 
-        function fieldSortableClass(sortable, field) {
-            var className = '';
+        function getFieldHeaderClass(sortable, field) {
+            var className = 'dt-head-' + (field.align || 'left');
             if (sortable && field.sortable) {
-                className = 'sorting';
+                className += ' sorting';
             }
 
             return className;
@@ -344,12 +354,12 @@ define(
             var subHtml = ['<tr>'];
             u.each(fields, function (field) {
                 if (!field.children) {
-                    html.push('<th rowspan="2" class="' + fieldSortableClass(sortable, field) + '">' + field.title + '</th>');
+                    html.push('<th rowspan="2" class="' + getFieldHeaderClass(sortable, field) + '">' + field.title + '</th>');
                 }
                 else {
                     html.push('<th colspan="' + field.children.length + '">' + field.title + '</th>');
                     u.each(field.children, function (child) {
-                        subHtml.push('<th class="' + fieldSortableClass(sortable, child) + '">' + child.title + '</th>');
+                        subHtml.push('<th class="' + getFieldHeaderClass(sortable, child) + '">' + child.title + '</th>');
                     });
                 }
             });
@@ -366,7 +376,7 @@ define(
             var html = ['<tr>'];
             html.push('<th rowspan="1" class="select-checkbox"></th>');
             u.each(fields, function (field) {
-                html.push('<th rowspan="1" class="' + fieldSortableClass(sortable, field) + '">' + field.title + '</th>');
+                html.push('<th rowspan="1" class="' + getFieldHeaderClass(sortable, field) + '">' + field.title + '</th>');
             });
             html.push('</tr>');
             HeadHTML += html.join('');
@@ -382,7 +392,7 @@ define(
                 rows.push('<tr>');
                 rows.push('<td class="select-checkbox"></td>');
                 u.each(actualFields, function (field) {
-                    var node = '<td>';
+                    var node = '<td class="dt-body-' + (field.align || 'left') + '">';
                     if (typeof field.content === 'function') {
                         node += field.content(source);
                     }
@@ -394,7 +404,27 @@ define(
                 });
                 rows.push('</tr>');
             });
-            return html + rows.join('') + '</tbody>';;
+            return html + rows.join('') + '</tbody>';
+        }
+
+        function createFooterHTML(foot) {
+            if (!foot) {
+                return '';
+            }
+            var html = '<tfoot><tr>';
+            var rows = [];
+            u.each(foot, function (item) {
+                var content = item.content || '';
+                if (typeof item.content === 'function') {
+                    content = item.content();
+                }
+
+                rows.push('<th class="' + 'dt-head-' + (item.align || 'left')
+                            + '" colspan=' + (item.colspan || 1) + '>'
+                            + content
+                            + '</th>');
+            });
+            return html + rows.join('') + '</tr></tfoot>';
         }
 
         /**
