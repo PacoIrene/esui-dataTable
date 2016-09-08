@@ -48,6 +48,7 @@ define(
                 },
 
                 initStructure: function () {
+
                 },
 
                 /**
@@ -135,6 +136,9 @@ define(
                     {
                         name: ['fields', 'datasource', 'sortable'],
                         paint: function (table, fields, datasource, sortable) {
+                            if (table.dataTable) {
+                                table.dataTable.destroy(true);
+                            }
                             var isComplexHead = analysizeFields(fields).isComplexHead;
                             var headHTML = isComplexHead ? withComplexHeadHTML(fields, sortable)
                                             : simpleHeadHTML(fields, sortable);
@@ -164,6 +168,12 @@ define(
                         }
                     },
                     {
+                        name: 'sortable',
+                        paint: function (table, sortable) {
+                            resetSortable(table, sortable);
+                        }
+                    },
+                    {
                         name: ['orderBy', 'order'],
                         paint: function (table, orderBy, order) {
                             resetFieldOrderable(table, orderBy, order);
@@ -173,6 +183,17 @@ define(
                         name: ['followHead', 'followHeadOffset'],
                         paint: function (table, followHead, followHeadOffset) {
                             resetFollowHead(table, followHead, followHeadOffset);
+                        }
+                    },
+                    {
+                        // 一共四种格式
+                        // 1. api: 只能通过api控制
+                        // 2. multi
+                        // 3. single
+                        // 4. os: 可以shift/ctrl
+                        name: 'select',
+                        paint: function (table, select) {
+                            resetSelect(table, select);
                         }
                     }
                 ),
@@ -218,6 +239,27 @@ define(
                 }
             }
         );
+
+        function resetSortable(table, sortable) {
+            var theads = $('th', table.dataTable.table().header());
+            if (!sortable) {
+                theads.removeClass('sorting sorting_asc sorting_desc');
+                return;
+            }
+            u.each(table.fields, function (field, index) {
+                if (field.sortable) {
+                    $(theads[index]).addClass('sorting');
+                }
+            });
+        }
+
+        function resetSelect(table, select) {
+            table.dataTable.rows().deselect();
+            if (!select) {
+                select = 'api';
+            }
+            table.dataTable.select.style(select);
+        }
 
         function resetFollowHead (table, followHead, followHeadOffset) {
             var fixedHeader = table.dataTable.fixedHeader;
