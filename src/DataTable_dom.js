@@ -146,8 +146,8 @@ define(
                                 info: false,
                                 searching: false,
                                 paging: false,
-                                // fixedHeader: true,
                                 processing: true,
+                                fixedHeader: true,
                                 // fixedColumns:   {
                                 //     leftColumns: 1
                                 // },
@@ -161,6 +161,18 @@ define(
                                 autoWidth: table.autoWidth
                             });
                             table.dataTable = dataTable;
+                        }
+                    },
+                    {
+                        name: ['orderBy', 'order'],
+                        paint: function (table, orderBy, order) {
+                            resetFieldOrderable(table, orderBy, order);
+                        }
+                    },
+                    {
+                        name: ['followHead', 'followHeadOffset'],
+                        paint: function (table, followHead, followHeadOffset) {
+                            resetFollowHead(table, followHead, followHeadOffset);
                         }
                     }
                 ),
@@ -206,6 +218,23 @@ define(
                 }
             }
         );
+
+        function resetFollowHead (table, followHead, followHeadOffset) {
+            var fixedHeader = table.dataTable.fixedHeader;
+            fixedHeader.enable(followHead);
+            fixedHeader.headerOffset(followHeadOffset);
+        }
+
+        function resetFieldOrderable(table, orderBy, order) {
+            orderBy = orderBy || table.orderBy;
+            var theads = $('th', table.dataTable.table().header());
+            u.each(table.fields, function (field, index) {
+                $(theads[index]).removeClass('sorting_asc sorting_desc');
+                if (field.field === orderBy && field.sortable && table.sortable) {
+                    $(theads[index]).addClass('sorting sorting_' + order);
+                }
+            });
+        }
 
         function analysizeFields(fields) {
             var actualFields = [];
