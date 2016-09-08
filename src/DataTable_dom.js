@@ -291,9 +291,6 @@ define(
                                 paging: false,
                                 processing: true,
                                 fixedHeader: true,
-                                // fixedColumns:   {
-                                //     leftColumns: 1
-                                // },
                                 ordering: false,
                                 scrollX: true,
                                 scrollBarVis: true,
@@ -301,7 +298,8 @@ define(
                                 language: {
                                     emptyTable: table.noDataHtml
                                 },
-                                autoWidth: table.autoWidth
+                                autoWidth: table.autoWidth,
+                                columnDefs: getFieldsWith(table, fields)
                             };
                             var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
                             table.dataTable = dataTable;
@@ -347,6 +345,14 @@ define(
                         name: 'select',
                         paint: function (table, select) {
                             resetSelect(table, select);
+                        }
+                    },
+                    {
+                        name: 'width',
+                        paint: function (table, width) {
+                            $(table.main).css('width', width);
+                            table.adjustWidth();
+                            table.fire('resize');
                         }
                     }
                 ),
@@ -402,6 +408,24 @@ define(
                 }
             }
         );
+
+        function getFieldsWith(table, fields) {
+            var widths = [{
+                width: table.selectColumnWidth,
+                targets: 0
+            }];
+
+            var actualFields = analysizeFields(fields).fields;
+            u.each(actualFields, function (field, index) {
+                if (field.width) {
+                    widths.push({
+                        width: field.width,
+                        targets: index + 1
+                    });
+                }
+            });
+            return widths;
+        }
 
         function getSingleRowData(table, data) {
             var actualFields = analysizeFields(table.fields).fields;
@@ -599,6 +623,10 @@ define(
                 foot.unshift({});
             }
             foot = foot.slice(0, actualFields.length + 1);
+            var lostLen = actualFields.length - foot.length;
+            for (var i = 0; i < lostLen; i++) {
+                foot.push({});
+            }
             var html = '<tfoot><tr>';
             var rows = [];
             u.each(foot, function (item) {
@@ -652,10 +680,7 @@ define(
             selectMode: 'box',
             subEntry: false,
             autoWidth: false,
-            serverSide: false,
-            ajaxUrl: null,
-            ajaxData: {},
-            ajaxMethod: 'GET'
+            selectColumnWidth: 35
         };
 
         esui.register(DataTable);
