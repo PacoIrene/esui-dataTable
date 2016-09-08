@@ -168,6 +168,12 @@ define(
                         }
                     },
                     {
+                        name: 'selectMode',
+                        paint: function (table, selectMode) {
+                            resetSelectMode(table, selectMode);
+                        }
+                    },
+                    {
                         name: 'sortable',
                         paint: function (table, sortable) {
                             resetSortable(table, sortable);
@@ -255,10 +261,36 @@ define(
 
         function resetSelect(table, select) {
             table.dataTable.rows().deselect();
+
+            var operationColumn = $(table.dataTable.column(0).nodes());
+            operationColumn.removeClass('select-checkbox select-radio');
+            $(table.dataTable.column(0).header()).removeClass('select-checkbox');
+
             if (!select) {
                 select = 'api';
+                table.dataTable.column(0).visible(false);
+            }
+            else {
+                table.dataTable.column(0).visible(true);
+                resetSelectMode(table, table.selectMode);
+            }
+            if (select === 'multi') {
+                $(table.dataTable.column(0).header()).addClass('select-checkbox');
+                operationColumn.addClass('select-checkbox');
+            }
+            else if (select === 'single') {
+                operationColumn.addClass('select-radio');
             }
             table.dataTable.select.style(select);
+        }
+
+        function resetSelectMode(table, selectMode) {
+            if (selectMode === 'box') {
+                table.dataTable.select.selector('td:first-child');
+            }
+            else if (selectMode === 'line') {
+                table.dataTable.select.selector('td');
+            }
         }
 
         function resetFollowHead (table, followHead, followHeadOffset) {
@@ -308,13 +340,14 @@ define(
         function withComplexHeadHTML(fields, sortable) {
             var HeadHTML = '<thead>'
             var html = ['<tr>'];
+            html.push('<th rowspan="2" class="select-checkbox"></th>');
             var subHtml = ['<tr>'];
             u.each(fields, function (field) {
                 if (!field.children) {
                     html.push('<th rowspan="2" class="' + fieldSortableClass(sortable, field) + '">' + field.title + '</th>');
                 }
                 else {
-                    html.push('<th colspan="' + field.children.length + '"' + ' width="' + field.width +'px">' + field.title + '</th>');
+                    html.push('<th colspan="' + field.children.length + '">' + field.title + '</th>');
                     u.each(field.children, function (child) {
                         subHtml.push('<th class="' + fieldSortableClass(sortable, child) + '">' + child.title + '</th>');
                     });
@@ -331,6 +364,7 @@ define(
         function simpleHeadHTML(fields, sortable) {
             var HeadHTML = '<thead>'
             var html = ['<tr>'];
+            html.push('<th rowspan="1" class="select-checkbox"></th>');
             u.each(fields, function (field) {
                 html.push('<th rowspan="1" class="' + fieldSortableClass(sortable, field) + '">' + field.title + '</th>');
             });
@@ -346,6 +380,7 @@ define(
             var rows = [];
             u.each(datasource, function (source) {
                 rows.push('<tr>');
+                rows.push('<td class="select-checkbox"></td>');
                 u.each(actualFields, function (field) {
                     var node = '<td>';
                     if (typeof field.content === 'function') {
