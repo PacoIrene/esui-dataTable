@@ -133,14 +133,33 @@ define(
                 repaint: painters.createRepaint(
                     Control.prototype.repaint,
                     {
-                        name: ['fields', 'datasource'],
-                        paint: function (table, fields, datasource) {
+                        name: ['fields', 'datasource', 'sortable'],
+                        paint: function (table, fields, datasource, sortable) {
                             var isComplexHead = analysizeFields(fields).isComplexHead;
-                            var headHTML = isComplexHead ? withComplexHeadHTML(fields) : simpleHeadHTML(fields);
-                            var bodyHTML = createColumnHTML(datasource, fields);
-                            var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">' + headHTML + bodyHTML + '</table>');
+                            var headHTML = isComplexHead ? withComplexHeadHTML(fields, sortable)
+                                            : simpleHeadHTML(fields, sortable);
+                            var bodyHTML = createColumnHTML(datasource, fields, sortable);
+                            var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
+                                        + headHTML + bodyHTML + '</table>');
                             $(cNode).appendTo(table.main);
-                            var dataTable = $(cNode).DataTable();
+                            var dataTable = $(cNode).DataTable({
+                                info: false,
+                                searching: false,
+                                paging: false,
+                                // fixedHeader: true,
+                                processing: true,
+                                // fixedColumns:   {
+                                //     leftColumns: 1
+                                // },
+                                ordering: false,
+                                scrollX: true,
+                                scrollBarVis: true,
+                                scrollCollapse: true,
+                                language: {
+                                    emptyTable: table.noDataHtml
+                                },
+                                autoWidth: table.autoWidth
+                            });
                             table.dataTable = dataTable;
                         }
                     }
@@ -206,18 +225,27 @@ define(
             };
         }
 
-        function withComplexHeadHTML(fields) {
+        function fieldSortableClass(sortable, field) {
+            var className = '';
+            if (sortable && field.sortable) {
+                className = 'sorting';
+            }
+
+            return className;
+        }
+
+        function withComplexHeadHTML(fields, sortable) {
             var HeadHTML = '<thead>'
             var html = ['<tr>'];
             var subHtml = ['<tr>'];
             u.each(fields, function (field) {
                 if (!field.children) {
-                    html.push('<th rowspan="2">' + field.title + '</th>');
+                    html.push('<th rowspan="2" class="' + fieldSortableClass(sortable, field) + '">' + field.title + '</th>');
                 }
                 else {
                     html.push('<th colspan="' + field.children.length + '"' + ' width="' + field.width +'px">' + field.title + '</th>');
                     u.each(field.children, function (child) {
-                        subHtml.push('<th>' + child.title + '</th>');
+                        subHtml.push('<th class="' + fieldSortableClass(sortable, child) + '">' + child.title + '</th>');
                     });
                 }
             });
@@ -229,11 +257,11 @@ define(
             return HeadHTML;
         }
 
-        function simpleHeadHTML(fields) {
+        function simpleHeadHTML(fields, sortable) {
             var HeadHTML = '<thead>'
             var html = ['<tr>'];
             u.each(fields, function (field) {
-                html.push('<th rowspan="1">' + field.title + '</th>');
+                html.push('<th rowspan="1" class="' + fieldSortableClass(sortable, field) + '">' + field.title + '</th>');
             });
             html.push('</tr>');
             HeadHTML += html.join('');
