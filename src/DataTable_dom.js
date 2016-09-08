@@ -53,6 +53,7 @@ define(
 
                 /**
                  * 设置Table的datasource，并强制更新
+                 *
                  * @public
                  * @param {Object} datasource 数据源
                  */
@@ -66,6 +67,10 @@ define(
                  * @public
                  */
                 setAllRowSelected: function (isSelected) {
+                    if (this.select !== 'multi') {
+                        return;
+                    }
+                    isSelected ? this.dataTable.rows().select() : this.dataTable.rows().deselect();
                 },
 
                 /**
@@ -75,6 +80,10 @@ define(
                  * @return {Array}
                  */
                 getSelectedItems: function () {
+                    var items = this.dataTable.rows({selected: true});
+                    return u.filter(this.datasource, function (source, index) {
+                        return items.indexes().indexOf(index) >= 0;
+                    });
                 },
 
                 /**
@@ -87,6 +96,12 @@ define(
                  * @param {boolean=} isEncodeHtml 是否需要进行html转义
                  */
                 setCellText: function (text, rowIndex, columnIndex, isEncodeHtml) {
+                    if (isEncodeHtml) {
+                        text = u.escape(text);
+                    }
+                    text = isNullOrEmpty(text) ? '&nbsp' : text;
+                    var cell = this.dataTable.cell(rowIndex, columnIndex);
+                    cell.node().innerHTML = text;
                 },
 
                 /**
@@ -97,6 +112,7 @@ define(
                  * @return {Element}
                  */
                 getRow: function (index) {
+                    return this.dataTable.row(index).node();
                 },
 
                  /**
@@ -105,10 +121,13 @@ define(
                  * @public
                  */
                 adjustWidth: function () {
+                    // TODO: 一旦draw了就整个重绘了 代价是不是有点大？
+                    this.dataTable.columns.adjust();
                 },
 
                 /**
                  * 重新绘制Table某行
+                 *
                  * @param {number} index 行数
                  * @param {Object} data 该行对应的数据源
                  * @public
@@ -123,6 +142,97 @@ define(
                  * @override
                  */
                 bindEvents: function () {
+                    var that = this;
+                    var dataTable = this.dataTable;
+                    if (this.select === 'multi') {
+                        $('th.select-checkbox', dataTable.table().header()).on('click', function () {
+                            $('tr', dataTable.table().header()).toggleClass('selected');
+                            that.setAllRowSelected($('tr', dataTable.table().header()).hasClass('selected'));
+                        });
+                    }
+                    dataTable.on('select', function (e, dt, type, indexes) {
+                        if (isAllRowSelected(that)) {
+                            $('tr', dataTable.table().header()).addClass('selected');
+                        }
+                        that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
+                    });
+                    dataTable.on('deselect', function (e, dt, type, indexes) {
+                        $('tr', dataTable.table().header()).removeClass('selected');
+                        that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
+                    });
+
+                    $(dataTable.table().header()).on('click', 'th.sorting', function () {
+                        var field = null;
+                        var index = dataTable.column(this).index();
+                        field = analysizeFields(that.fields).fields[index - 1];
+                        if (field.sortable) {
+                            var orderBy = that.orderBy;
+                            var order = that.order;
+
+                            if (orderBy === field.field) {
+                                order = (!order || order === 'asc') ? 'desc' : 'asc';
+                            }
+                            else {
+                                order = 'desc';
+                            }
+
+                            that.setProperties({
+                                order: order,
+                                orderBy: field.field
+                            });
+
+                            that.fire('sort', {field: field, order: order});
+                        }
+                    });
+
+                    dataTable.on('click', 'td.details-control', function (e) {
+                        var index = dataTable.row(this).index();
+                        var eventArgs = {
+                            index: index,
+                            item: dataTable.row(index).data()
+                        };
+                        $(dataTable.cell(this).node()).removeClass('details-control');
+                        $(dataTable.cell(this).node()).addClass('details-control-open');
+                        that.fire('subrowopen', eventArgs);
+                    });
+
+                    dataTable.on('click', 'td.details-control-open', function (e) {
+                        var index = dataTable.row(this).index();
+                        var eventArgs = {
+                            index: index,
+                            item: dataTable.row(index).data()
+                        };
+                        $(dataTable.cell(this).node()).removeClass('details-control-open');
+                        $(dataTable.cell(this).node()).addClass('details-control');
+                        that.fire('subrowclose', eventArgs);
+                        dataTable.row(index).child().hide();
+                    });
+
+                    var delegate = Event.delegate;
+                    delegate(
+                        dataTable, 'startdrag',
+                        this, 'startdrag',
+                        {preserveData: true, syncState: true}
+                    );
+                    delegate(
+                        dataTable, 'startdrag',
+                        this, 'dragstart',
+                        {preserveData: true, syncState: true}
+                    );
+                    delegate(
+                        dataTable, 'enddrag',
+                        this, 'dragend',
+                        {preserveData: true, syncState: true}
+                    );
+                    delegate(
+                        dataTable, 'enddrag',
+                        this, 'enddrag',
+                        {preserveData: true, syncState: true}
+                    );
+                    this.helper.addDOMEvent(window, 'resize', u.bind(function (e) {
+                        // this.adjustWidth();
+                        // this.fire('resize');
+                    }, this));
                 },
 
                 /**
@@ -168,6 +278,7 @@ define(
                             var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
                             table.dataTable = dataTable;
                             table.helper.initChildren(dataTable.table().header());
+                            table.bindEvents();
                         }
                     },
                     {
@@ -300,7 +411,7 @@ define(
             }
         }
 
-        function resetFollowHead (table, followHead, followHeadOffset) {
+        function resetFollowHead(table, followHead, followHeadOffset) {
             var fixedHeader = table.dataTable.fixedHeader;
             fixedHeader.enable(followHead);
             fixedHeader.headerOffset(followHeadOffset);
@@ -309,16 +420,23 @@ define(
         function resetFieldOrderable(table, orderBy, order) {
             orderBy = orderBy || table.orderBy;
             var theads = $('th', table.dataTable.table().header());
-            u.each(table.fields, function (field, index) {
-                var actualIndex = index;
-                if (table.select === 'multi' || table.select === 'single') {
-                    actualIndex = index + 1;
-                }
-                $(theads[actualIndex]).removeClass('sorting_asc sorting_desc');
-                if (field.field === orderBy && field.sortable && table.sortable) {
-                    $(theads[actualIndex]).addClass('sorting sorting_' + order);
+            var actualFields = analysizeFields(table.fields).fields;
+            u.each(theads, function (head, index) {
+                $(head).removeClass('sorting_asc sorting_desc');
+                var fieldId = $(head).attr('data-field-id');
+                var fieldConfig = u.find(actualFields, function (field) {
+                    return field.field === fieldId;
+                });
+                if (fieldId === orderBy && table.sortable && fieldConfig && fieldConfig.sortable) {
+                    $(head).addClass('sorting sorting_' + order);
                 }
             });
+        }
+
+        function isAllRowSelected(table) {
+            var datasource = table.datasource;
+            var selectedItems = table.getSelectedItems();
+            return selectedItems.length === datasource.length;
         }
 
         function analysizeFields(fields) {
@@ -349,23 +467,25 @@ define(
         }
         function createHeadTitle(field) {
             return field.tip ? '<div '
-                    + 'data-ui="type:Tip;content:'+ field.tip + '">'
+                    + 'data-ui="type:Tip;content:' + field.tip + '">'
                     + '</div>' + field.title : field.title;
         }
 
         function withComplexHeadHTML(fields, sortable) {
-            var HeadHTML = '<thead>'
+            var HeadHTML = '<thead>';
             var html = ['<tr>'];
             html.push('<th rowspan="2" class="select-checkbox"></th>');
             var subHtml = ['<tr>'];
             u.each(fields, function (field) {
                 if (!field.children) {
-                    html.push('<th rowspan="2" class="' + getFieldHeaderClass(sortable, field) + '">' + createHeadTitle(field) + '</th>');
+                    html.push('<th rowspan="2" class="' + getFieldHeaderClass(sortable, field)
+                        + '" data-field-id="' + field.field + '">' + createHeadTitle(field) + '</th>');
                 }
                 else {
                     html.push('<th colspan="' + field.children.length + '">' + createHeadTitle(field) + '</th>');
                     u.each(field.children, function (child) {
-                        subHtml.push('<th class="' + getFieldHeaderClass(sortable, child) + '">' + createHeadTitle(child) + '</th>');
+                        subHtml.push('<th class="' + getFieldHeaderClass(sortable, child)
+                            + '" data-field-id="' + child.field + '">' + createHeadTitle(child) + '</th>');
                     });
                 }
             });
@@ -378,16 +498,17 @@ define(
         }
 
         function simpleHeadHTML(fields, sortable) {
-            var HeadHTML = '<thead>'
+            var HeadHTML = '<thead>';
             var html = ['<tr>'];
             html.push('<th rowspan="1" class="select-checkbox"></th>');
             u.each(fields, function (field) {
-                html.push('<th rowspan="1" class="' + getFieldHeaderClass(sortable, field) + '">' + createHeadTitle(child) + '</th>');
+                html.push('<th rowspan="1" class="' + getFieldHeaderClass(sortable, field)
+                        + '" data-field-id="' + field.field + '">' + createHeadTitle(field) + '</th>');
             });
             html.push('</tr>');
             HeadHTML += html.join('');
             HeadHTML += '</thead>';
-            return HeadHTML
+            return HeadHTML;
         }
 
         function createColumnHTML(datasource, fields) {
