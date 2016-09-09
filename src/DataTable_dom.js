@@ -13,7 +13,10 @@ define(
         require('./dataTables.select');
         require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
+        // fixedColumns 与 现有的select体系不能兼容
         require('./dataTables.fixedColumns');
+        // colReorder 与 复合表头不能同时使用 会出bug
+        require('./dataTables.colReorder');
 
         var DataTable = eoo.create(
             Control,
@@ -257,9 +260,14 @@ define(
                         this, 'enddrag',
                         {preserveData: true, syncState: true}
                     );
+                    delegate(
+                        dataTable, 'column-reorder',
+                        this, 'columnreorder',
+                        {preserveData: true, syncState: true}
+                    );
                     this.helper.addDOMEvent(window, 'resize', u.bind(function (e) {
-                        // this.adjustWidth();
-                        // this.fire('resize');
+                        this.adjustWidth();
+                        this.fire('resize');
                     }, this));
                 },
 
@@ -281,7 +289,7 @@ define(
                             var headHTML = isComplexHead ? withComplexHeadHTML(fields)
                                             : simpleHeadHTML(fields);
                             var bodyHTML = createColumnHTML(datasource, fields);
-                            var footHTML = createFooterHTML(table, foot);
+                            var footHTML = createFooterHTML(table, null);
                             var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
                                         + headHTML + footHTML +  bodyHTML + '</table>');
                             $(cNode).appendTo(table.main);
@@ -298,6 +306,11 @@ define(
                                 language: {
                                     emptyTable: table.noDataHtml
                                 },
+                                // fixedColumns: {
+                                //     leftColumns: table.leftFixedColumns,
+                                //     rightColumns: table.rightFixedColumns
+                                // },
+                                colReorder: table.colReorder,
                                 autoWidth: table.autoWidth,
                                 columnDefs: getFieldsWith(table, fields)
                             };
@@ -680,7 +693,10 @@ define(
             selectMode: 'box',
             subEntry: false,
             autoWidth: false,
-            selectColumnWidth: 35
+            selectColumnWidth: 35,
+            colReorder: false,
+            leftFixedColumns: 0,
+            rightFixedColumns: 0
         };
 
         esui.register(DataTable);

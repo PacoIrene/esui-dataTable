@@ -109,9 +109,6 @@
                                 return '<span>' + item.id + '</span>';
                             }
                         },
-                        {
-                            title: '信息',
-                            children: [
                                 {
                                     title: '推广单元名称',
                                     field: 'name' ,
@@ -138,16 +135,14 @@
                                     content: function (item) {
                                         return item.sex ? '男' : '女';
                                     }
-                                }
-                            ]
-                        },
+                                },
                         {
                             title: '操作',
                             field: 'operation',
                             resizable : true,
                             width: 120,
                             content: function (item) {
-                                return item.id;
+                                return '操作';
                             }
                         }
                     ];
@@ -192,6 +187,9 @@
                                         footer: true
                                     }
                                 },
+                                colReorder: true,
+                                leftFixedColumns: 2,
+                                rightFixedColumns: 2,
                                 ajaxData: {
                                     a: 1,
                                     b: 2
@@ -299,6 +297,10 @@
                     ui.get('table').initChildren();
 
                     ui.get('table').on('beforerowupdate', function(e) {
+                        console.log(e);
+                    });
+
+                    ui.get('table').on('columnreorder', function(e) {
                         console.log(e);
                     });
 
