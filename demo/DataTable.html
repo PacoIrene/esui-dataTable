@@ -172,7 +172,7 @@
                     ];
                     var lib = require('esui/lib');
                     var newData = [];
-                    for (var i = 0; i !== 5000; i++) {
+                    for (var i = 0; i !== 16; i++) {
                         newData = newData.concat(data);
                     }
                     ui.init(document.body,{
@@ -181,6 +181,8 @@
                                 serverSide: false,
                                 autoWidth: true,
                                 followHead: false,
+                                clientPaging: false,
+                                scrollY: 300,
                                 extendOptions: {
                                     fixedHeader: {
                                         header: true,
@@ -194,7 +196,7 @@
                                     a: 1,
                                     b: 2
                                 },
-                                datasource: data,
+                                datasource: newData,
                                 fields: fields,
                                 foot: [
                                     {},

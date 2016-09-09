@@ -9,6 +9,7 @@ define(
         var eoo = require('eoo');
         var $ = require('jquery');
         var Event = require('mini-event');
+        // page客户端分页 与 全选 全不选 存在性能问题
         require('./dataTables');
         require('./dataTables.select');
         require('./dataTables.fixedHeader');
@@ -81,6 +82,15 @@ define(
                     if (this.select !== 'multi') {
                         return;
                     }
+                    // if (this.clientPaging) {
+                    //     var info = this.dataTable.page.info();
+                    //     var start = info.start;
+                    //     var end = info.end;
+                    //     for (var index = start; index < end; index++) {
+                    //         isSelected ? this.dataTable.row(index).select() : this.dataTable.row(index).deselect();
+                    //     }
+                    //     return;
+                    // }
                     isSelected ? this.dataTable.rows().select() : this.dataTable.rows().deselect();
                 },
 
@@ -187,6 +197,7 @@ define(
                     dataTable.on('deselect', function (e, dt, type, indexes) {
                         $('tr', dataTable.table().header()).removeClass('selected');
                         that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
+                        that.adjustWidth();
                     });
 
                     $(dataTable.table().header()).on('click', 'th.sorting', function () {
@@ -293,15 +304,22 @@ define(
                                 data: datasource,
                                 info: false,
                                 searching: false,
-                                paging: false,
+                                paging: table.clientPaging,
                                 processing: true,
                                 fixedHeader: true,
                                 ordering: false,
                                 scrollX: true,
+                                scrollY: table.scrollY,
                                 scrollBarVis: true,
                                 scrollCollapse: true,
                                 language: {
-                                    emptyTable: table.noDataHtml
+                                    emptyTable: table.noDataHtml,
+                                    paginate: {
+                                        previous: table.pagePrevious,
+                                        next: table.pageNext
+                                    },
+                                    processing: table.processingText,
+                                    lengthMenu: table.lengthMenu
                                 },
                                 // fixedColumns: {
                                 //     leftColumns: table.leftFixedColumns,
@@ -451,7 +469,7 @@ define(
                     return field.field === fieldId;
                 });
                 if (fieldConfig) {
-                    var alignClass = 'dt-body-' + fieldConfig.align || 'left';
+                    var alignClass = 'dt-body-' + (fieldConfig.align || 'left');
                     $(table.dataTable.column(index).nodes()).addClass(alignClass);
                 }
             });
@@ -674,7 +692,13 @@ define(
             selectColumnWidth: 35,
             colReorder: false,
             leftFixedColumns: 0,
-            rightFixedColumns: 0
+            rightFixedColumns: 0,
+            clientPaging: false,
+            processingText: '加载中...',
+            pagePrevious: '上一页',
+            pageNext: '下一页',
+            scrollY: null,
+            lengthMenu: '每页显示_MENU_'
         };
 
         esui.register(DataTable);
