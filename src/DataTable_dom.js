@@ -63,10 +63,7 @@ define(
                 setDatasource: function (datasource) {
                     this.datasource = datasource;
                     this.dataTable.clear();
-                    var newData = u.map(datasource, function (source) {
-                        return getSingleRowData(this, source);
-                    }.bind(this));
-                    this.dataTable.data().rows.add(newData);
+                    this.dataTable.data().rows.add(datasource);
                     this.dataTable.draw();
                     $('tr', this.dataTable.table().header()).removeClass('selected');
                     resetSelect(this, this.select);
@@ -157,7 +154,7 @@ define(
                             {index: index, data: dataItem}
                         );
 
-                        rowEl.data(getSingleRowData(this, data)).draw();
+                        rowEl.data(data).draw();
 
                         this.fire(
                             'afterrowupdate',
@@ -288,12 +285,12 @@ define(
                             var isComplexHead = analysizeFields(fields).isComplexHead;
                             var headHTML = isComplexHead ? withComplexHeadHTML(fields)
                                             : simpleHeadHTML(fields);
-                            var bodyHTML = createColumnHTML(datasource, fields);
-                            var footHTML = createFooterHTML(table, null);
+                            var footHTML = createFooterHTML(table, foot);
                             var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
-                                        + headHTML + footHTML +  bodyHTML + '</table>');
+                                        + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
                             var options = {
+                                data: datasource,
                                 info: false,
                                 searching: false,
                                 paging: false,
@@ -312,11 +309,12 @@ define(
                                 // },
                                 colReorder: table.colReorder,
                                 autoWidth: table.autoWidth,
-                                columnDefs: getFieldsWith(table, fields)
+                                columnDefs: getColumnDefs(table, fields)
                             };
                             var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
                             table.dataTable = dataTable;
                             table.helper.initChildren(dataTable.table().header());
+                            resetBodyClass(table, fields);
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
                             resetSelect(table, table.select);
@@ -422,38 +420,41 @@ define(
             }
         );
 
-        function getFieldsWith(table, fields) {
-            var widths = [{
+        function getColumnDefs(table, fields) {
+            var columns = [{
+                data: null,
+                defaultContent: '',
                 width: table.selectColumnWidth,
                 targets: 0
             }];
 
             var actualFields = analysizeFields(fields).fields;
             u.each(actualFields, function (field, index) {
+                var column = {
+                    data: field.content,
+                    targets: index + 1
+                };
                 if (field.width) {
-                    widths.push({
-                        width: field.width,
-                        targets: index + 1
-                    });
+                    column.width = field.width;
                 }
+                columns.push(column);
             });
-            return widths;
+            return columns;
         }
 
-        function getSingleRowData(table, data) {
+        function resetBodyClass(table, fields) {
+            var columnDefs = table.dataTable.settings()[0].aoColumns;
             var actualFields = analysizeFields(table.fields).fields;
-            var updateData = [];
-            updateData.push('');
-
-            u.each(actualFields, function (field) {
-                if (typeof field.content === 'function') {
-                    updateData.push(field.content(data));
-                }
-                else {
-                    updateData.push(data[field.field]);
+            u.each(columnDefs, function (def, index) {
+                var fieldId = def.fieldId;
+                var fieldConfig = u.find(actualFields, function (field) {
+                    return field.field === fieldId;
+                });
+                if (fieldConfig) {
+                    var alignClass = 'dt-body-' + fieldConfig.align || 'left';
+                    $(table.dataTable.column(index).nodes()).addClass(alignClass);
                 }
             });
-            return updateData;
         }
 
         function resetSortable(table, sortable) {
@@ -601,29 +602,6 @@ define(
             HeadHTML += html.join('');
             HeadHTML += '</thead>';
             return HeadHTML;
-        }
-
-        function createColumnHTML(datasource, fields) {
-            var actualFields = analysizeFields(fields).fields;
-            var html = '<tbody>';
-            var rows = [];
-            u.each(datasource, function (source) {
-                rows.push('<tr>');
-                rows.push('<td class="select-checkbox"></td>');
-                u.each(actualFields, function (field) {
-                    var node = '<td class="dt-body-' + (field.align || 'left') + '">';
-                    if (typeof field.content === 'function') {
-                        node += field.content(source);
-                    }
-                    else {
-                        node += field.content;
-                    }
-                    node += '</td>';
-                    rows.push(node);
-                });
-                rows.push('</tr>');
-            });
-            return html + rows.join('') + '</tbody>';
         }
 
         function createFooterHTML(table, foot) {
