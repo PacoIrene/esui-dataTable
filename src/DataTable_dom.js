@@ -101,10 +101,7 @@ define(
                  * @return {Array}
                  */
                 getSelectedItems: function () {
-                    var items = this.dataTable.rows({selected: true});
-                    return u.filter(this.datasource, function (source, index) {
-                        return items.indexes().indexOf(index) >= 0;
-                    });
+                    return this.dataTable.rows({selected: true}).data().toArray();
                 },
 
                 /**
@@ -154,22 +151,23 @@ define(
                  * @public
                  */
                 updateRowAt: function (index, data) {
-                    (data) && (this.datasource[index] = data);
-                    var dataItem = this.datasource[index];
-                    var rowEl = this.dataTable.row(index);
+                    if (-1 < index && index < this.datasource.length && data) {
+                        var oldData = this.datasource[index];
+                        if (!u.isEqual(data, oldData)) {
+                            var rowEl = this.dataTable.row(index);
+                            this.fire(
+                                'beforerowupdate',
+                                {index: index, data: oldData, nextData: data}
+                            );
 
-                    if (dataItem && rowEl.length) {
-                        this.fire(
-                            'beforerowupdate',
-                            {index: index, data: dataItem}
-                        );
+                            this.datasource[index] = data;
+                            rowEl.data(data).draw();
 
-                        rowEl.data(data).draw();
-
-                        this.fire(
-                            'afterrowupdate',
-                            {index: index, data: dataItem}
-                        );
+                            this.fire(
+                                'afterrowupdate',
+                                {index: index, data: data, prevData: oldData}
+                            );
+                        }
                     }
                 },
 
@@ -182,25 +180,27 @@ define(
                 bindEvents: function () {
                     var that = this;
                     var dataTable = this.dataTable;
+                    var header = dataTable.table().header();
+                    var headerTr = $('tr', header);
                     if (this.select === 'multi') {
-                        $('th.select-checkbox', dataTable.table().header()).on('click', function () {
-                            $('tr', dataTable.table().header()).toggleClass('selected');
-                            that.setAllRowSelected($('tr', dataTable.table().header()).hasClass('selected'));
+                        $('th.select-checkbox', header).on('click', function () {
+                            headerTr.toggleClass('selected');
+                            that.setAllRowSelected(headerTr.hasClass('selected'));
                         });
                     }
                     dataTable.on('select', function (e, dt, type, indexes) {
                         if (isAllRowSelected(that)) {
-                            $('tr', dataTable.table().header()).addClass('selected');
+                            headerTr.addClass('selected');
                         }
                         that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
                     });
                     dataTable.on('deselect', function (e, dt, type, indexes) {
-                        $('tr', dataTable.table().header()).removeClass('selected');
+                        headerTr.removeClass('selected');
                         that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
                         that.adjustWidth();
                     });
 
-                    $(dataTable.table().header()).on('click', 'th.sorting', function () {
+                    $(header).on('click', 'th.sorting', function () {
                         var field = null;
                         var index = dataTable.column(this).index();
                         field = analysizeFields(that.fields).fields[index - 1];
@@ -233,6 +233,7 @@ define(
                         $(dataTable.cell(this).node()).removeClass('details-control');
                         $(dataTable.cell(this).node()).addClass('details-control-open');
                         that.fire('subrowopen', eventArgs);
+                        dataTable.row(index).child().show();
                     });
 
                     dataTable.on('click', 'td.details-control-open', function (e) {
@@ -660,7 +661,7 @@ define(
          * @return {bool}
          */
         function hasValue(obj) {
-            return !(typeof obj === 'undefined' || obj === null);
+            return obj != null;
         }
 
         /**
