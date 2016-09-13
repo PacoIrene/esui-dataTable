@@ -15,6 +15,7 @@ define(
         require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
         // fixedColumns 与 现有的select体系不能兼容
+        // 这玩意儿太多坑了 填也填不完
         require('./dataTables.fixedColumns');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
@@ -322,10 +323,10 @@ define(
                                     processing: table.processingText,
                                     lengthMenu: table.lengthMenu
                                 },
-                                // fixedColumns: {
-                                //     leftColumns: table.leftFixedColumns,
-                                //     rightColumns: table.rightFixedColumns
-                                // },
+                                fixedColumns: {
+                                    leftColumns: table.leftFixedColumns,
+                                    rightColumns: table.rightFixedColumns
+                                },
                                 colReorder: table.colReorder,
                                 autoWidth: table.autoWidth,
                                 columnDefs: getColumnDefs(table, fields)
@@ -501,6 +502,8 @@ define(
             operationColumn.removeClass('select-checkbox select-radio');
             $(table.dataTable.column(0).header()).removeClass('select-checkbox');
 
+            operationColumn.addClass('select-indicator');
+
             if (!select) {
                 select = 'api';
                 table.dataTable.column(0).visible(false);
@@ -516,16 +519,17 @@ define(
             else if (select === 'single') {
                 operationColumn.addClass('select-radio');
             }
-            table.dataTable.select.style(select);
+            table.dataTable.select.style(select).fixedColumns().relayout();
         }
 
         function resetSelectMode(table, selectMode) {
             if (selectMode === 'box') {
-                table.dataTable.select.selector('td:first-child');
+                table.dataTable.select.selector('td:first-child.select-indicator');
             }
             else if (selectMode === 'line') {
                 table.dataTable.select.selector('td');
             }
+            table.dataTable.fixedColumns().relayout();
         }
 
         function resetFollowHead(table, followHead, followHeadOffset) {
