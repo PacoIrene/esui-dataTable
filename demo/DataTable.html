@@ -70,8 +70,7 @@
                 {id:6, name: '0', sex: 1},
                 {id:3, name: 'frank', sex: 1},
                 {id:2, name: 'tony', sex: 0},
-                {id:5, name: 'false', sex: 1},
-                {id:1, name: 'erik', sex: 1}
+                {id:5, name: 'false', sex: 1}
             ];
             var myTable = null;
             require(
@@ -109,33 +108,33 @@
                                 return '<span>' + item.id + '</span>';
                             }
                         },
-                                {
-                                    title: '推广单元名称',
-                                    field: 'name' ,
-                                    sortable: true,
-                                    align: 'right',
-                                    editable: 1,
-                                    comparer : function(a, b){
-                                        return a.name.localeCompare( b.name );
-                                    },
-                                    resizable : true,
-                                    width: 100,
-                                    content: function (item) {
-                                        return item.name;
-                                    }
-                                },
-                                {
-                                    title: '状态',
-                                    field: 'sex' ,
-                                    comparer : function(a, b){
-                                        return a.sex - b.sex;
-                                    },
-                                    resizable : true,
-                                    width: 120,
-                                    content: function (item) {
-                                        return item.sex ? '男' : '女';
-                                    }
-                                },
+                        {
+                            title: '推广单元名称',
+                            field: 'name' ,
+                            sortable: true,
+                            align: 'right',
+                            editable: 1,
+                            comparer : function(a, b){
+                                return a.name.localeCompare( b.name );
+                            },
+                            resizable : true,
+                            width: 100,
+                            content: function (item) {
+                                return item.name;
+                            }
+                        },
+                        {
+                            title: '状态',
+                            field: 'sex' ,
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
                         {
                             title: '操作',
                             field: 'operation',
@@ -172,7 +171,7 @@
                     ];
                     var lib = require('esui/lib');
                     var newData = [];
-                    for (var i = 0; i !== 16; i++) {
+                    for (var i = 0; i !== 200; i++) {
                         newData = newData.concat(data);
                     }
                     ui.init(document.body,{
@@ -196,7 +195,7 @@
                                     a: 1,
                                     b: 2
                                 },
-                                datasource: newData,
+                                datasource: data,
                                 fields: fields,
                                 foot: [
                                     {},

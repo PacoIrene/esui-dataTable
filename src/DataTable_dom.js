@@ -634,7 +634,7 @@ define(
             }
             foot = foot.slice(0, actualFields.length + 1);
             var lostLen = actualFields.length - foot.length;
-            for (var i = 0; i < lostLen; i++) {
+            for (var i = 0; i <= lostLen; i++) {
                 foot.push({});
             }
             var html = '<tfoot><tr>';
