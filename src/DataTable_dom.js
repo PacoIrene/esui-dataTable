@@ -12,11 +12,12 @@ define(
         // page客户端分页 与 全选 全不选 存在性能问题
         require('./dataTables');
         require('./dataTables.select');
+        // fixedColumns 与 现有的select体系不能兼容
+        // !IMPORTANT
+        // fixedColumns 一定要require在fixedHeader之前 否则会出bug
+        require('./dataTables.fixedColumns');
         require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
-        // fixedColumns 与 现有的select体系不能兼容
-        // 这玩意儿太多坑了 填也填不完
-        require('./dataTables.fixedColumns');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
 
@@ -199,6 +200,19 @@ define(
                         headerTr.removeClass('selected');
                         that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
                         that.adjustWidth();
+                    });
+
+                    dataTable.on('page', function (e, dt) {
+                        var info = dataTable.page.info();
+                        // 从0开始
+                        that.fire('page', {
+                            page: info.page,
+                            start: info.start,
+                            end: info.end,
+                            pageSize: info.length,
+                            total: info.recordsTotal,
+                            pages: info.pages
+                        });
                     });
 
                     $(header).on('click', 'th.sorting', function () {
