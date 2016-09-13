@@ -12,7 +12,6 @@ define(
         // page客户端分页 与 全选 全不选 存在性能问题
         require('./dataTables');
         require('./dataTables.select');
-        // fixedColumns 与 现有的select体系不能兼容
         // !IMPORTANT
         // fixedColumns 一定要require在fixedHeader之前 否则会出bug
         require('./dataTables.fixedColumns');
@@ -184,10 +183,14 @@ define(
                     var dataTable = this.dataTable;
                     var header = dataTable.table().header();
                     var headerTr = $('tr', header);
+
+                    var fixedColumnsDom = dataTable.fixedColumns().settings()[0]._oFixedColumns.dom;
+
                     if (this.select === 'multi') {
                         $('th.select-checkbox', header).on('click', function () {
                             headerTr.toggleClass('selected');
                             that.setAllRowSelected(headerTr.hasClass('selected'));
+                            dataTable.fixedColumns().relayout();
                         });
                     }
                     dataTable.on('select', function (e, dt, type, indexes) {
@@ -237,6 +240,34 @@ define(
 
                             that.fire('sort', {field: field, order: order});
                         }
+                        dataTable.fixedColumns().relayout();
+                    });
+
+                    $(fixedColumnsDom.header).on('click', 'th.sorting', function () {
+                        var fieldId = $(this).attr('data-field-id');
+                        var actualFields = analysizeFields(that.fields).fields;
+                        var fieldConfig = u.find(actualFields, function (field) {
+                            return field.field === fieldId;
+                        });
+                        if (fieldConfig && fieldConfig.sortable) {
+                            var orderBy = that.orderBy;
+                            var order = that.order;
+
+                            if (orderBy === fieldConfig.field) {
+                                order = (!order || order === 'asc') ? 'desc' : 'asc';
+                            }
+                            else {
+                                order = 'desc';
+                            }
+
+                            that.setProperties({
+                                order: order,
+                                orderBy: fieldConfig.field
+                            });
+
+                            that.fire('sort', {field: fieldConfig, order: order});
+                        }
+                        dataTable.fixedColumns().relayout();
                     });
 
                     dataTable.on('click', 'td.details-control', function (e) {
