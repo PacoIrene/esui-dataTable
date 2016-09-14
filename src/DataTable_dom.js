@@ -278,6 +278,30 @@ define(
                         dataTable.fixedColumns().relayout();
                     });
 
+                    dataTable.on('click', 'td.details-control', function (e) {
+                        var index = dataTable.row(this).index();
+                        var eventArgs = {
+                            index: index,
+                            item: dataTable.row(index).data()
+                        };
+                        $(dataTable.cell(this).node()).removeClass('details-control');
+                        $(dataTable.cell(this).node()).addClass('details-control-open');
+                        that.fire('subrowopen', eventArgs);
+                        dataTable.row(index).child().show();
+                    });
+
+                    dataTable.on('click', 'td.details-control-open', function (e) {
+                        var index = dataTable.row(this).index();
+                        var eventArgs = {
+                            index: index,
+                            item: dataTable.row(index).data()
+                        };
+                        $(dataTable.cell(this).node()).removeClass('details-control-open');
+                        $(dataTable.cell(this).node()).addClass('details-control');
+                        that.fire('subrowclose', eventArgs);
+                        dataTable.row(index).child().hide();
+                    });
+
                     var delegate = Event.delegate;
                     delegate(
                         dataTable, 'startdrag',
@@ -473,22 +497,28 @@ define(
 
         function getColumnDefs(table, fields) {
             var index = 0;
-            var columns = [{
-                data: null,
-                defaultContent: '',
-                width: table.selectColumnWidth,
-                targets: index++
-            }];
+            var columns = [];
             if (table.subEntry) {
                 columns.push({
                     className: 'details-control',
                     orderable: false,
-                    data: null,
-                    defaultContent: '<span class="ui-icon-plus-circle ui-eicons-fw"></span>',
+                    data: function (item) {
+                        if (item.children && item.children.length) {
+                            return '<span class="ui-icon-plus-circle ui-eicons-fw"></span>';
+                        }
+                        return null;
+                    },
                     width: table.subEntryColumnWidth,
                     targets: index++
                 });
             }
+            columns.push({
+                data: null,
+                className: 'select-checkbox',
+                defaultContent: '',
+                width: table.selectColumnWidth,
+                targets: index++
+            });
 
             var actualFields = analysizeFields(fields).fields;
             u.each(actualFields, function (field) {
@@ -540,22 +570,23 @@ define(
         function resetSelect(table, select) {
             table.dataTable.rows().deselect();
 
-            var operationColumn = $(table.dataTable.column(0).nodes());
+            var selectIndex = table.subEntry ? 1 : 0;
+            var operationColumn = $(table.dataTable.column(selectIndex).nodes());
             operationColumn.removeClass('select-checkbox select-radio');
-            $(table.dataTable.column(0).header()).removeClass('select-checkbox');
+            $(table.dataTable.column(selectIndex).header()).removeClass('select-checkbox');
 
             operationColumn.addClass('select-indicator');
 
             if (!select) {
                 select = 'api';
-                table.dataTable.column(0).visible(false);
+                table.dataTable.column(selectIndex).visible(false);
             }
             else {
-                table.dataTable.column(0).visible(true);
+                table.dataTable.column(selectIndex).visible(true);
                 resetSelectMode(table, table.selectMode);
             }
             if (select === 'multi') {
-                $(table.dataTable.column(0).header()).addClass('select-checkbox');
+                $(table.dataTable.column(selectIndex).header()).addClass('select-checkbox');
                 operationColumn.addClass('select-checkbox');
             }
             else if (select === 'single') {
@@ -634,10 +665,10 @@ define(
             var html = ['<tr>'];
             var subHtml = ['<tr>'];
             var subEntry = table.subEntry;
-            html.push('<th rowspan="2" class="select-checkbox"></th>');
             if (subEntry) {
                 html.push('<th rowspan="2" class="details-control"></th>');
             }
+            html.push('<th rowspan="2" class="select-checkbox"></th>');
             fields = fields || table.fields;
             u.each(fields, function (field) {
                 if (!field.children) {
@@ -664,10 +695,10 @@ define(
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
             var subEntry = table.subEntry;
-            html.push('<th rowspan="1" class="select-checkbox"></th>');
             if (subEntry) {
                 html.push('<th rowspan="1" class="details-control"></th>');
             }
+            html.push('<th rowspan="1" class="select-checkbox"></th>');
             fields = fields || table.fields;
             u.each(fields, function (field) {
                 html.push('<th rowspan="1" class="' + getFieldHeaderClass(field)
@@ -695,6 +726,10 @@ define(
             }
             var html = '<tfoot><tr>';
             var rows = [];
+            var subEntry = table.subEntry;
+            if (subEntry) {
+                rows.push('<th rowspan="1" class="details-control"></th>');
+            }
             u.each(foot, function (item) {
                 var content = item.content || '';
                 if (typeof item.content === 'function') {

@@ -49,7 +49,16 @@
                 <h2>Table</h2>
                 <div class="example">
                     <div
-                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui-extension-tableedit-type="TableEdit"
+                        data-ui-extension-autosort-type="AutoSort"
+                        data-ui-auto-sort="true"
+                        class="display"></div>
+                </div>
+                <h2>Table Subrow</h2>
+                <div class="example">
+                    <div
+                        data-ui="type:DataTable;id:tablesubrow;columnResizable:true;variants:striped;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
                         data-ui-extension-tablesubrow-type="TableSubrow"
@@ -80,9 +89,7 @@
                 {id:3, name: 'frank', sex: 1},
                 {id:2, name: 'tony', sex: 0},
                 {id:5, name: 'false', sex: 1},
-                {id:6, name: '0', sex: 1},
-                {id:3, name: 'frank', sex: 1},
-                {id:2, name: 'tony', sex: 0},
+                {id:1, name: 'erik', sex: 1}
             ];
             var myTable = null;
             require(
@@ -152,7 +159,6 @@
                             field: 'operation',
                             resizable : true,
                             width: 120,
-                            sortable: true,
                             content: function (item) {
                                 return '操作';
                             }
@@ -184,76 +190,78 @@
                     ];
                     var lib = require('esui/lib');
                     var newData = [];
-                    for (var i = 0; i !== 200; i++) {
+                    for (var i = 0; i !== 16; i++) {
                         newData = newData.concat(data);
                     }
+                    var tableProperties = {
+                        serverSide: false,
+                        autoWidth: true,
+                        followHead: false,
+                        clientPaging: true,
+                        scrollY: 300,
+                        extendOptions: {
+                            fixedHeader: {
+                                header: true,
+                                footer: true
+                            }
+                        },
+                        colReorder: true,
+                        leftFixedColumns: 2,
+                        rightFixedColumns: 2,
+                        ajaxData: {
+                            a: 1,
+                            b: 2
+                        },
+                        datasource: newData,
+                        fields: fields,
+                        foot: [
+                            {},
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                align: 'right',
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            }
+                        ],
+                        neck: [
+                            {},
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                align: 'right',
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            }
+                        ]
+                    };
                     ui.init(document.body,{
                         properties : {
-                            table: {
-                                serverSide: false,
-                                autoWidth: true,
-                                followHead: false,
-                                clientPaging: true,
-                                scrollY: 300,
-                                extendOptions: {
-                                    fixedHeader: {
-                                        header: true,
-                                        footer: true
-                                    }
-                                },
-                                colReorder: true,
-                                leftFixedColumns: 2,
-                                rightFixedColumns: 2,
-                                ajaxData: {
-                                    a: 1,
-                                    b: 2
-                                },
-                                datasource: data,
-                                fields: fields,
-                                foot: [
-                                    {},
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        align: 'right',
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    }
-                                ],
-                                neck: [
-                                    {},
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        align: 'right',
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    }
-                                ]
-                            }
+                            table: tableProperties,
+                            tablesubrow: tableProperties 
                         }
                     });
 

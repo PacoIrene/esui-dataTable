@@ -55,15 +55,16 @@ define(
                                 index: index,
                                 item: data
                             };
-                            $(dataTable.cell(this).node()).removeClass('details-control');
-                            $(dataTable.cell(this).node()).addClass('details-control-open');
+                            var td = $(dataTable.cell(this).node());
+                            td.removeClass('details-control');
+                            td.addClass('details-control-open');
                             target.fire('subrowopen', eventArgs);
-                            var subWrapper = $.parseHTML(''
+                            var subTable = $.parseHTML(''
                                 + '<table class="display" cellspacing="0" width="100%">'
                                 +     '<tbody></tbody>'
                                 + '</table>');
-                            var subTable = target.initDataTable(subWrapper, target, data.children, target.fields);
-                            dataTable.row(index).child(subWrapper).show();
+                            target.initDataTable(subTable, target, data.children, target.fields);
+                            dataTable.row(index).child(subTable).show();
                         });
 
                         dataTable.on('click', 'td.details-control-open', function (e) {
@@ -72,12 +73,13 @@ define(
                                 index: index,
                                 item: dataTable.row(index).data()
                             };
-                            $(dataTable.cell(this).node()).removeClass('details-control-open');
-                            $(dataTable.cell(this).node()).addClass('details-control');
+                            var td = $(dataTable.cell(this).node());
+                            td.removeClass('details-control-open');
+                            td.addClass('details-control');
                             target.fire('subrowclose', eventArgs);
                             dataTable.row(index).child().hide();
                         });
-                    }
+                    };
                 },
 
                 /**
