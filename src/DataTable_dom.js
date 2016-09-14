@@ -184,7 +184,10 @@ define(
                     var header = dataTable.table().header();
                     var headerTr = $('tr', header);
 
-                    var fixedColumnsDom = dataTable.fixedColumns().settings()[0]._oFixedColumns.dom;
+                    var fixedColumnsDom = null;
+                    if (dataTable.fixedColumns().settings()[0]._oFixedColumns) {
+                        fixedColumnsDom = dataTable.fixedColumns().settings()[0]._oFixedColumns.dom;
+                    }
 
                     if (this.select === 'multi') {
                         $('th.select-checkbox', header).on('click', function () {
@@ -226,57 +229,60 @@ define(
                         dataTable.fixedColumns().relayout();
                     });
 
-                    $(header).on('click', 'th.sorting', function () {
-                        var field = null;
-                        var index = dataTable.column(this).index();
-                        field = analysizeFields(that.fields).fields[index - 1];
-                        if (field.sortable) {
-                            var orderBy = that.orderBy;
-                            var order = that.order;
-
-                            if (orderBy === field.field) {
-                                order = (!order || order === 'asc') ? 'desc' : 'asc';
-                            }
-                            else {
-                                order = 'desc';
-                            }
-
-                            that.setProperties({
-                                order: order,
-                                orderBy: field.field
+                    if (fixedColumnsDom) {
+                        $(fixedColumnsDom.header).on('click', 'th.sorting', function () {
+                            var fieldId = $(this).attr('data-field-id');
+                            var actualFields = analysizeFields(that.fields).fields;
+                            var fieldConfig = u.find(actualFields, function (field) {
+                                return field.field === fieldId;
                             });
+                            if (fieldConfig && fieldConfig.sortable) {
+                                var orderBy = that.orderBy;
+                                var order = that.order;
 
-                            that.fire('sort', {field: field, order: order});
-                        }
-                        dataTable.fixedColumns().relayout();
-                    });
+                                if (orderBy === fieldConfig.field) {
+                                    order = (!order || order === 'asc') ? 'desc' : 'asc';
+                                }
+                                else {
+                                    order = 'desc';
+                                }
 
-                    $(fixedColumnsDom.header).on('click', 'th.sorting', function () {
-                        var fieldId = $(this).attr('data-field-id');
-                        var actualFields = analysizeFields(that.fields).fields;
-                        var fieldConfig = u.find(actualFields, function (field) {
-                            return field.field === fieldId;
+                                that.setProperties({
+                                    order: order,
+                                    orderBy: fieldConfig.field
+                                });
+
+                                that.fire('sort', {field: fieldConfig, order: order});
+                            }
+                            dataTable.fixedColumns().relayout();
                         });
-                        if (fieldConfig && fieldConfig.sortable) {
-                            var orderBy = that.orderBy;
-                            var order = that.order;
+                    }
+                    else {
+                        $(header).on('click', 'th.sorting', function () {
+                            var field = null;
+                            var index = dataTable.column(this).index();
+                            field = analysizeFields(that.fields).fields[index - 1];
+                            if (field.sortable) {
+                                var orderBy = that.orderBy;
+                                var order = that.order;
 
-                            if (orderBy === fieldConfig.field) {
-                                order = (!order || order === 'asc') ? 'desc' : 'asc';
+                                if (orderBy === field.field) {
+                                    order = (!order || order === 'asc') ? 'desc' : 'asc';
+                                }
+                                else {
+                                    order = 'desc';
+                                }
+
+                                that.setProperties({
+                                    order: order,
+                                    orderBy: field.field
+                                });
+
+                                that.fire('sort', {field: field, order: order});
                             }
-                            else {
-                                order = 'desc';
-                            }
-
-                            that.setProperties({
-                                order: order,
-                                orderBy: fieldConfig.field
-                            });
-
-                            that.fire('sort', {field: fieldConfig, order: order});
-                        }
-                        dataTable.fixedColumns().relayout();
-                    });
+                            dataTable.fixedColumns().relayout();
+                        });
+                    }
 
                     dataTable.on('click', 'td.details-control', function (e) {
                         var index = dataTable.row(this).index();
