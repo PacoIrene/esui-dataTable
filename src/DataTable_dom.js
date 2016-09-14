@@ -224,30 +224,6 @@ define(
                         }
                     });
 
-                    dataTable.on('click', 'td.details-control', function (e) {
-                        var index = dataTable.row(this).index();
-                        var eventArgs = {
-                            index: index,
-                            item: dataTable.row(index).data()
-                        };
-                        $(dataTable.cell(this).node()).removeClass('details-control');
-                        $(dataTable.cell(this).node()).addClass('details-control-open');
-                        that.fire('subrowopen', eventArgs);
-                        dataTable.row(index).child().show();
-                    });
-
-                    dataTable.on('click', 'td.details-control-open', function (e) {
-                        var index = dataTable.row(this).index();
-                        var eventArgs = {
-                            index: index,
-                            item: dataTable.row(index).data()
-                        };
-                        $(dataTable.cell(this).node()).removeClass('details-control-open');
-                        $(dataTable.cell(this).node()).addClass('details-control');
-                        that.fire('subrowclose', eventArgs);
-                        dataTable.row(index).child().hide();
-                    });
-
                     var delegate = Event.delegate;
                     delegate(
                         dataTable, 'startdrag',
@@ -294,45 +270,15 @@ define(
                             if (table.dataTable) {
                                 table.dataTable.destroy(true);
                             }
+                            var select = table.select;
                             var isComplexHead = analysizeFields(fields).isComplexHead;
-                            var headHTML = isComplexHead ? withComplexHeadHTML(fields)
-                                            : simpleHeadHTML(fields);
+                            var headHTML = isComplexHead ? withComplexHeadHTML(table, fields)
+                                            : simpleHeadHTML(table, fields);
                             var footHTML = createFooterHTML(table, foot);
                             var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
-                            var options = {
-                                data: datasource,
-                                info: false,
-                                searching: false,
-                                paging: table.clientPaging,
-                                processing: true,
-                                fixedHeader: true,
-                                ordering: false,
-                                scrollX: true,
-                                scrollY: table.scrollY,
-                                scrollBarVis: true,
-                                scrollCollapse: true,
-                                language: {
-                                    emptyTable: table.noDataHtml,
-                                    paginate: {
-                                        previous: table.pagePrevious,
-                                        next: table.pageNext
-                                    },
-                                    processing: table.processingText,
-                                    lengthMenu: table.lengthMenu
-                                },
-                                // fixedColumns: {
-                                //     leftColumns: table.leftFixedColumns,
-                                //     rightColumns: table.rightFixedColumns
-                                // },
-                                colReorder: table.colReorder,
-                                autoWidth: table.autoWidth,
-                                columnDefs: getColumnDefs(table, fields)
-                            };
-                            var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
-                            table.dataTable = dataTable;
-                            table.helper.initChildren(dataTable.table().header());
+                            var dataTable = table.initDataTable(cNode, table, datasource, fields);
                             resetBodyClass(table, fields);
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
@@ -387,10 +333,48 @@ define(
                     }
                 ),
 
+                initDataTable: function (cNode, table, datasource, fields) {
+                    var options = {
+                        data: datasource,
+                        info: false,
+                        searching: false,
+                        paging: table.clientPaging,
+                        processing: true,
+                        fixedHeader: true,
+                        ordering: false,
+                        scrollX: true,
+                        scrollY: table.scrollY,
+                        scrollBarVis: true,
+                        scrollCollapse: true,
+                        language: {
+                            emptyTable: table.noDataHtml,
+                            paginate: {
+                                previous: table.pagePrevious,
+                                next: table.pageNext
+                            },
+                            processing: table.processingText,
+                            lengthMenu: table.lengthMenu
+                        },
+                        // fixedColumns: {
+                        //     leftColumns: table.leftFixedColumns,
+                        //     rightColumns: table.rightFixedColumns
+                        // },
+                        colReorder: table.colReorder,
+                        autoWidth: table.autoWidth,
+                        columnDefs: getColumnDefs(table, fields)
+                    };
+                    var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
+                    table.dataTable = dataTable;
+                    table.helper.initChildren(dataTable.table().header());
+                    return dataTable;
+                },
+
                 setSubrowContent: function (content, index) {
+                    this.dataTable.row(index).child(content).show();
                 },
 
                 getSubrowContainer: function (index) {
+                    return this.getChild('subrow-panel-' + index);
                 },
 
                 /**
@@ -440,18 +424,29 @@ define(
         );
 
         function getColumnDefs(table, fields) {
+            var index = 0;
             var columns = [{
                 data: null,
                 defaultContent: '',
                 width: table.selectColumnWidth,
-                targets: 0
+                targets: index++
             }];
+            if (table.subEntry) {
+                columns.push({
+                    className: 'details-control',
+                    orderable: false,
+                    data: null,
+                    defaultContent: '<span class="ui-icon-plus-circle ui-eicons-fw"></span>',
+                    width: table.subEntryColumnWidth,
+                    targets: index++
+                });
+            }
 
             var actualFields = analysizeFields(fields).fields;
-            u.each(actualFields, function (field, index) {
+            u.each(actualFields, function (field) {
                 var column = {
                     data: field.content,
-                    targets: index + 1
+                    targets: index++
                 };
                 if (field.width) {
                     column.width = field.width;
@@ -583,11 +578,16 @@ define(
                     + '</div>' + field.title : field.title;
         }
 
-        function withComplexHeadHTML(fields) {
+        function withComplexHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
-            html.push('<th rowspan="2" class="select-checkbox"></th>');
             var subHtml = ['<tr>'];
+            var subEntry = table.subEntry;
+            html.push('<th rowspan="2" class="select-checkbox"></th>');
+            if (subEntry) {
+                html.push('<th rowspan="2" class="details-control"></th>');
+            }
+            fields = fields || table.fields;
             u.each(fields, function (field) {
                 if (!field.children) {
                     html.push('<th rowspan="2" class="' + getFieldHeaderClass(field)
@@ -609,10 +609,15 @@ define(
             return HeadHTML;
         }
 
-        function simpleHeadHTML(fields) {
+        function simpleHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
+            var subEntry = table.subEntry;
             html.push('<th rowspan="1" class="select-checkbox"></th>');
+            if (subEntry) {
+                html.push('<th rowspan="1" class="details-control"></th>');
+            }
+            fields = fields || table.fields;
             u.each(fields, function (field) {
                 html.push('<th rowspan="1" class="' + getFieldHeaderClass(field)
                         + '" data-field-id="' + field.field + '">' + createHeadTitle(field) + '</th>');
@@ -691,6 +696,7 @@ define(
             subEntry: false,
             autoWidth: false,
             selectColumnWidth: 35,
+            subEntryColumnWidth: 5,
             colReorder: false,
             leftFixedColumns: 0,
             rightFixedColumns: 0,

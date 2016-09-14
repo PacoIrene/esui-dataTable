@@ -49,9 +49,10 @@
                 <h2>Table</h2>
                 <div class="example">
                     <div
-                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui="type:DataTable;id:table;columnResizable:true;variants:striped;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
+                        data-ui-extension-tablesubrow-type="TableSubrow"
                         data-ui-auto-sort="true"
                         data-ui-sub-entry="true"
                         class="display"></div>
@@ -66,7 +67,15 @@
         <script src="assets/google-code-prettify/prettify.js"></script>
         <script id="main-js">
             var data = [
-                {id:4, name: 'meimei', sex: 1},
+                {id:4, name: 'meimei', sex: 1,
+                    children: [
+                        {id:6, name: '0', sex: 1},
+                        {id:3, name: 'frank', sex: 1},
+                        {id:2, name: 'tony', sex: 0},
+                        {id:5, name: 'false', sex: 1},
+                        {id:1, name: 'erik', sex: 1}
+                    ]
+                },
                 {id:6, name: '0', sex: 1},
                 {id:3, name: 'frank', sex: 1},
                 {id:2, name: 'tony', sex: 0},
@@ -81,10 +90,10 @@
                     'esui/Panel',
                     'esui/SearchBox',
                     'esui/extension/TableEdit',
-                    'esui/extension/TableSubrow',
                     'esui/extension/Command',
                     'esui/extension/AutoSort',
                     'esui/extension/CustomData',
+                    'src/TableSubrow',
                     'src/DataTable_dom',
                 ],
                 function (ui) {
@@ -109,33 +118,33 @@
                                 return '<span>' + item.id + '</span>';
                             }
                         },
-                                {
-                                    title: '推广单元名称',
-                                    field: 'name' ,
-                                    sortable: true,
-                                    align: 'right',
-                                    editable: 1,
-                                    comparer : function(a, b){
-                                        return a.name.localeCompare( b.name );
-                                    },
-                                    resizable : true,
-                                    width: 100,
-                                    content: function (item) {
-                                        return item.name;
-                                    }
-                                },
-                                {
-                                    title: '状态',
-                                    field: 'sex' ,
-                                    comparer : function(a, b){
-                                        return a.sex - b.sex;
-                                    },
-                                    resizable : true,
-                                    width: 120,
-                                    content: function (item) {
-                                        return item.sex ? '男' : '女';
-                                    }
-                                },
+                        {
+                            title: '推广单元名称',
+                            field: 'name' ,
+                            sortable: true,
+                            align: 'right',
+                            editable: 1,
+                            comparer : function(a, b){
+                                return a.name.localeCompare( b.name );
+                            },
+                            resizable : true,
+                            width: 100,
+                            content: function (item) {
+                                return item.name;
+                            }
+                        },
+                        {
+                            title: '状态',
+                            field: 'sex' ,
+                            comparer : function(a, b){
+                                return a.sex - b.sex;
+                            },
+                            resizable : true,
+                            width: 120,
+                            content: function (item) {
+                                return item.sex ? '男' : '女';
+                            }
+                        },
                         {
                             title: '操作',
                             field: 'operation',
@@ -335,10 +344,10 @@
                     });
 
                     ui.get('table').onsubrowopen = function (e) {
-                        this.setSubrowContent(
-                            '<span style="line-height:30px;">Hello ' + e.item.name + '</span>',
-                            e.index
-                        );
+                        // this.setSubrowContent(
+                            // '<span style="line-height:30px;">Hello ' + e.item.name + '</span>',
+                            // e.index
+                        // );
                     };
 
                     ui.get('table').onsubrowclose = function (e) {
