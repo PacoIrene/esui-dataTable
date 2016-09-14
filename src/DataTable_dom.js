@@ -218,6 +218,14 @@ define(
                         });
                     });
 
+                    dataTable.on('column-reorder', function (e, settings, details) {
+                        that.fire('columnreorder', {
+                            from: details.from,
+                            to: details.to
+                        });
+                        dataTable.fixedColumns().relayout();
+                    });
+
                     $(header).on('click', 'th.sorting', function () {
                         var field = null;
                         var index = dataTable.column(this).index();
@@ -313,11 +321,6 @@ define(
                     delegate(
                         dataTable, 'enddrag',
                         this, 'enddrag',
-                        {preserveData: true, syncState: true}
-                    );
-                    delegate(
-                        dataTable, 'column-reorder',
-                        this, 'columnreorder',
                         {preserveData: true, syncState: true}
                     );
                     this.helper.addDOMEvent(window, 'resize', u.bind(function (e) {
