@@ -80,7 +80,9 @@
                 {id:3, name: 'frank', sex: 1},
                 {id:2, name: 'tony', sex: 0},
                 {id:5, name: 'false', sex: 1},
-                {id:1, name: 'erik', sex: 1}
+                {id:6, name: '0', sex: 1},
+                {id:3, name: 'frank', sex: 1},
+                {id:2, name: 'tony', sex: 0},
             ];
             var myTable = null;
             require(
@@ -150,6 +152,7 @@
                             field: 'operation',
                             resizable : true,
                             width: 120,
+                            sortable: true,
                             content: function (item) {
                                 return '操作';
                             }
@@ -181,7 +184,7 @@
                     ];
                     var lib = require('esui/lib');
                     var newData = [];
-                    for (var i = 0; i !== 16; i++) {
+                    for (var i = 0; i !== 200; i++) {
                         newData = newData.concat(data);
                     }
                     ui.init(document.body,{
@@ -205,7 +208,7 @@
                                     a: 1,
                                     b: 2
                                 },
-                                datasource: newData,
+                                datasource: data,
                                 fields: fields,
                                 foot: [
                                     {},

@@ -12,10 +12,11 @@ define(
         // page客户端分页 与 全选 全不选 存在性能问题
         require('./dataTables');
         require('./dataTables.select');
+        // !IMPORTANT
+        // fixedColumns 一定要require在fixedHeader之前 否则会出bug
+        require('./dataTables.fixedColumns');
         require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
-        // fixedColumns 与 现有的select体系不能兼容
-        require('./dataTables.fixedColumns');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
 
@@ -182,10 +183,14 @@ define(
                     var dataTable = this.dataTable;
                     var header = dataTable.table().header();
                     var headerTr = $('tr', header);
+
+                    var fixedColumnsDom = dataTable.fixedColumns().settings()[0]._oFixedColumns.dom;
+
                     if (this.select === 'multi') {
                         $('th.select-checkbox', header).on('click', function () {
                             headerTr.toggleClass('selected');
                             that.setAllRowSelected(headerTr.hasClass('selected'));
+                            dataTable.fixedColumns().relayout();
                         });
                     }
                     dataTable.on('select', function (e, dt, type, indexes) {
@@ -198,6 +203,27 @@ define(
                         headerTr.removeClass('selected');
                         that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
                         that.adjustWidth();
+                    });
+
+                    dataTable.on('page', function (e, dt) {
+                        var info = dataTable.page.info();
+                        // 从0开始
+                        that.fire('page', {
+                            page: info.page,
+                            start: info.start,
+                            end: info.end,
+                            pageSize: info.length,
+                            total: info.recordsTotal,
+                            pages: info.pages
+                        });
+                    });
+
+                    dataTable.on('column-reorder', function (e, settings, details) {
+                        that.fire('columnreorder', {
+                            from: details.from,
+                            to: details.to
+                        });
+                        dataTable.fixedColumns().relayout();
                     });
 
                     $(header).on('click', 'th.sorting', function () {
@@ -222,6 +248,34 @@ define(
 
                             that.fire('sort', {field: field, order: order});
                         }
+                        dataTable.fixedColumns().relayout();
+                    });
+
+                    $(fixedColumnsDom.header).on('click', 'th.sorting', function () {
+                        var fieldId = $(this).attr('data-field-id');
+                        var actualFields = analysizeFields(that.fields).fields;
+                        var fieldConfig = u.find(actualFields, function (field) {
+                            return field.field === fieldId;
+                        });
+                        if (fieldConfig && fieldConfig.sortable) {
+                            var orderBy = that.orderBy;
+                            var order = that.order;
+
+                            if (orderBy === fieldConfig.field) {
+                                order = (!order || order === 'asc') ? 'desc' : 'asc';
+                            }
+                            else {
+                                order = 'desc';
+                            }
+
+                            that.setProperties({
+                                order: order,
+                                orderBy: fieldConfig.field
+                            });
+
+                            that.fire('sort', {field: fieldConfig, order: order});
+                        }
+                        dataTable.fixedColumns().relayout();
                     });
 
                     var delegate = Event.delegate;
@@ -245,11 +299,6 @@ define(
                         this, 'enddrag',
                         {preserveData: true, syncState: true}
                     );
-                    delegate(
-                        dataTable, 'column-reorder',
-                        this, 'columnreorder',
-                        {preserveData: true, syncState: true}
-                    );
                     this.helper.addDOMEvent(window, 'resize', u.bind(function (e) {
                         this.adjustWidth();
                         this.fire('resize');
@@ -270,7 +319,6 @@ define(
                             if (table.dataTable) {
                                 table.dataTable.destroy(true);
                             }
-                            var select = table.select;
                             var isComplexHead = analysizeFields(fields).isComplexHead;
                             var headHTML = isComplexHead ? withComplexHeadHTML(table, fields)
                                             : simpleHeadHTML(table, fields);
@@ -278,7 +326,7 @@ define(
                             var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
-                            var dataTable = table.initDataTable(cNode, table, datasource, fields);
+                            table.initDataTable(cNode, table, datasource, fields);
                             resetBodyClass(table, fields);
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
@@ -355,10 +403,10 @@ define(
                             processing: table.processingText,
                             lengthMenu: table.lengthMenu
                         },
-                        // fixedColumns: {
-                        //     leftColumns: table.leftFixedColumns,
-                        //     rightColumns: table.rightFixedColumns
-                        // },
+                        fixedColumns: {
+                            leftColumns: table.leftFixedColumns,
+                            rightColumns: table.rightFixedColumns
+                        },
                         colReorder: table.colReorder,
                         autoWidth: table.autoWidth,
                         columnDefs: getColumnDefs(table, fields)
@@ -496,6 +544,8 @@ define(
             operationColumn.removeClass('select-checkbox select-radio');
             $(table.dataTable.column(0).header()).removeClass('select-checkbox');
 
+            operationColumn.addClass('select-indicator');
+
             if (!select) {
                 select = 'api';
                 table.dataTable.column(0).visible(false);
@@ -511,16 +561,17 @@ define(
             else if (select === 'single') {
                 operationColumn.addClass('select-radio');
             }
-            table.dataTable.select.style(select);
+            table.dataTable.select.style(select).fixedColumns().relayout();
         }
 
         function resetSelectMode(table, selectMode) {
             if (selectMode === 'box') {
-                table.dataTable.select.selector('td:first-child');
+                table.dataTable.select.selector('td:first-child.select-indicator');
             }
             else if (selectMode === 'line') {
                 table.dataTable.select.selector('td');
             }
+            table.dataTable.fixedColumns().relayout();
         }
 
         function resetFollowHead(table, followHead, followHeadOffset) {
@@ -639,7 +690,7 @@ define(
             }
             foot = foot.slice(0, actualFields.length + 1);
             var lostLen = actualFields.length - foot.length;
-            for (var i = 0; i < lostLen; i++) {
+            for (var i = 0; i <= lostLen; i++) {
                 foot.push({});
             }
             var html = '<tfoot><tr>';
