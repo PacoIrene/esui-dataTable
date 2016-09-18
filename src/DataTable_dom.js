@@ -2,7 +2,6 @@
 define(
     function (require) {
         var u = require('underscore');
-        var lib = require('esui/lib');
         var Control = require('esui/Control');
         var painters = require('esui/painters');
         var esui = require('esui/main');
@@ -282,19 +281,20 @@ define(
                         var index = dataTable.row(this).index();
                         var eventArgs = {
                             index: index,
-                            item: dataTable.row(index).data()
+                            item: dataTable.row(index).data(),
+                            dataTable: dataTable
                         };
                         $(dataTable.cell(this).node()).removeClass('details-control');
                         $(dataTable.cell(this).node()).addClass('details-control-open');
                         that.fire('subrowopen', eventArgs);
-                        dataTable.row(index).child().show();
                     });
 
                     dataTable.on('click', 'td.details-control-open', function (e) {
                         var index = dataTable.row(this).index();
                         var eventArgs = {
                             index: index,
-                            item: dataTable.row(index).data()
+                            item: dataTable.row(index).data(),
+                            dataTable: dataTable
                         };
                         $(dataTable.cell(this).node()).removeClass('details-control-open');
                         $(dataTable.cell(this).node()).addClass('details-control');
@@ -350,7 +350,9 @@ define(
                             var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
-                            table.initDataTable(cNode, table, datasource, fields);
+                            var dataTable = table.initDataTable(cNode, table, datasource, fields);
+                            table.dataTable = dataTable;
+                            table.helper.initChildren(dataTable.table().header());
                             resetBodyClass(table, fields);
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
@@ -435,10 +437,7 @@ define(
                         autoWidth: table.autoWidth,
                         columnDefs: getColumnDefs(table, fields)
                     };
-                    var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
-                    table.dataTable = dataTable;
-                    table.helper.initChildren(dataTable.table().header());
-                    return dataTable;
+                    return $(cNode).DataTable(u.extend(options, table.extendOptions));
                 },
 
                 setSubrowContent: function (content, index) {
@@ -473,6 +472,18 @@ define(
 
                 addHandlers: function () {},
 
+                resetBodyClass: function (table, fields, dataTable) {
+                    resetBodyClass(table, fields, dataTable);
+                },
+
+                resetSelect: function (table, select, dataTable) {
+                    resetSelect(table, select, dataTable);
+                },
+
+                resetSelectMode: function (table, selectMode, dataTable) {
+                    resetSelectMode(table, selectMode, dataTable);
+                },
+
                 /**
                  * 销毁释放控件
                  *
@@ -497,7 +508,12 @@ define(
 
         function getColumnDefs(table, fields) {
             var index = 0;
-            var columns = [];
+            var columns = [{
+                data: null,
+                defaultContent: '',
+                width: table.selectColumnWidth,
+                targets: index++
+            }];
             if (table.subEntry) {
                 columns.push({
                     className: 'details-control',
@@ -512,13 +528,6 @@ define(
                     targets: index++
                 });
             }
-            columns.push({
-                data: null,
-                className: 'select-checkbox',
-                defaultContent: '',
-                width: table.selectColumnWidth,
-                targets: index++
-            });
 
             var actualFields = analysizeFields(fields).fields;
             u.each(actualFields, function (field) {
@@ -534,7 +543,8 @@ define(
             return columns;
         }
 
-        function resetBodyClass(table, fields) {
+        function resetBodyClass(table, fields, dataTable) {
+            dataTable = dataTable || table.dataTable;
             var columnDefs = table.dataTable.settings()[0].aoColumns;
             var actualFields = analysizeFields(table.fields).fields;
             u.each(columnDefs, function (def, index) {
@@ -544,7 +554,7 @@ define(
                 });
                 if (fieldConfig) {
                     var alignClass = 'dt-body-' + (fieldConfig.align || 'left');
-                    $(table.dataTable.column(index).nodes()).addClass(alignClass);
+                    $(dataTable.column(index).nodes()).addClass(alignClass);
                 }
             });
         }
@@ -567,42 +577,48 @@ define(
             });
         }
 
-        function resetSelect(table, select) {
-            table.dataTable.rows().deselect();
+        function resetSelect(table, select, dataTable) {
+            dataTable = dataTable || table.dataTable;
+            select && dataTable.rows().deselect();
 
-            var selectIndex = table.subEntry ? 1 : 0;
-            var operationColumn = $(table.dataTable.column(selectIndex).nodes());
+            var operationColumn = $(dataTable.column(0).nodes());
             operationColumn.removeClass('select-checkbox select-radio');
-            $(table.dataTable.column(selectIndex).header()).removeClass('select-checkbox');
+            $(dataTable.column(0).header()).removeClass('select-checkbox');
 
             operationColumn.addClass('select-indicator');
 
             if (!select) {
                 select = 'api';
-                table.dataTable.column(selectIndex).visible(false);
+                dataTable.column(0).visible(false);
             }
             else {
-                table.dataTable.column(selectIndex).visible(true);
-                resetSelectMode(table, table.selectMode);
+                dataTable.column(0).visible(true);
+                resetSelectMode(table, table.selectMode, dataTable);
             }
             if (select === 'multi') {
-                $(table.dataTable.column(selectIndex).header()).addClass('select-checkbox');
+                $(dataTable.column(0).header()).addClass('select-checkbox');
                 operationColumn.addClass('select-checkbox');
             }
             else if (select === 'single') {
                 operationColumn.addClass('select-radio');
             }
-            table.dataTable.select.style(select).fixedColumns().relayout();
+            try {
+                dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
+            } catch (exp) {}
         }
 
-        function resetSelectMode(table, selectMode) {
+        function resetSelectMode(table, selectMode, dataTable) {
+            if (!table.select) {
+                return;
+            }
+            dataTable = dataTable || table.dataTable;
             if (selectMode === 'box') {
-                table.dataTable.select.selector('td:first-child.select-indicator');
+                dataTable.select.selector('td:first-child.select-indicator');
             }
             else if (selectMode === 'line') {
-                table.dataTable.select.selector('td');
+                dataTable.select.selector('td');
             }
-            table.dataTable.fixedColumns().relayout();
+            dataTable.fixedColumns().relayout();
         }
 
         function resetFollowHead(table, followHead, followHeadOffset) {
@@ -665,10 +681,10 @@ define(
             var html = ['<tr>'];
             var subHtml = ['<tr>'];
             var subEntry = table.subEntry;
+            html.push('<th rowspan="2" class="select-checkbox"></th>');
             if (subEntry) {
                 html.push('<th rowspan="2" class="details-control"></th>');
             }
-            html.push('<th rowspan="2" class="select-checkbox"></th>');
             fields = fields || table.fields;
             u.each(fields, function (field) {
                 if (!field.children) {
@@ -695,10 +711,10 @@ define(
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
             var subEntry = table.subEntry;
+            html.push('<th rowspan="1" class="select-checkbox"></th>');
             if (subEntry) {
                 html.push('<th rowspan="1" class="details-control"></th>');
             }
-            html.push('<th rowspan="1" class="select-checkbox"></th>');
             fields = fields || table.fields;
             u.each(fields, function (field) {
                 html.push('<th rowspan="1" class="' + getFieldHeaderClass(field)

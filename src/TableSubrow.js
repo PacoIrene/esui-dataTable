@@ -14,6 +14,11 @@ define(
         var $ = require('jquery');
         var eoo = require('eoo');
         require('./dataTables');
+        require('./dataTables.select');
+        require('./dataTables.fixedColumns');
+        require('./dataTables.fixedHeader');
+        require('./dataTables.scroller');
+        require('./dataTables.colReorder');
 
         /**
          * 表格子行扩展
@@ -58,13 +63,20 @@ define(
                             var td = $(dataTable.cell(this).node());
                             td.removeClass('details-control');
                             td.addClass('details-control-open');
+                            td.html('<span class="ui-icon-minus-circle ui-eicons-fw"></span>');
                             target.fire('subrowopen', eventArgs);
-                            var subTable = $.parseHTML(''
+                            var subTableWrapper = $.parseHTML(''
                                 + '<table class="display" cellspacing="0" width="100%">'
                                 +     '<tbody></tbody>'
                                 + '</table>');
-                            target.initDataTable(subTable, target, data.children, target.fields);
-                            dataTable.row(index).child(subTable).show();
+                            var subTable = target.initDataTable(subTableWrapper, target, data.children, target.fields);
+                            target.helper.initChildren(subTable.table().header());
+                            row.child(subTableWrapper).show();
+                            $(row.node()).next().find('>td').css('padding', 0);
+                            target.resetBodyClass(target, target.fields, subTable);
+                            target.resetSelectMode(target, target.selectMode, subTable);
+                            target.resetSelect(target, target.select, subTable);
+                            subTable.columns.adjust();
                         });
 
                         dataTable.on('click', 'td.details-control-open', function (e) {
@@ -76,6 +88,7 @@ define(
                             var td = $(dataTable.cell(this).node());
                             td.removeClass('details-control-open');
                             td.addClass('details-control');
+                            td.html('<span class="ui-icon-plus-circle ui-eicons-fw"></span>');
                             target.fire('subrowclose', eventArgs);
                             dataTable.row(index).child().hide();
                         });

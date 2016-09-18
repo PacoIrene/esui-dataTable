@@ -78,11 +78,19 @@
             var data = [
                 {id:4, name: 'meimei', sex: 1,
                     children: [
-                        {id:6, name: '0', sex: 1},
-                        {id:3, name: 'frank', sex: 1},
-                        {id:2, name: 'tony', sex: 0},
-                        {id:5, name: 'false', sex: 1},
-                        {id:1, name: 'erik', sex: 1}
+                        {id:66, name: 'child_0', sex: 1,
+                            children: [
+                                {id:666, name: 'child_child_0', sex: 1},
+                                {id:333, name: 'child_child_frank', sex: 1},
+                                {id:222, name: 'child_child_tony', sex: 0},
+                                {id:555, name: 'child_child_false', sex: 1},
+                                {id:111, name: 'child_child_erik', sex: 1}
+                            ]
+                        },
+                        {id:33, name: 'child_frank', sex: 1},
+                        {id:22, name: 'child_tony', sex: 0},
+                        {id:55, name: 'child_false', sex: 1},
+                        {id:11, name: 'child_erik', sex: 1}
                     ]
                 },
                 {id:6, name: '0', sex: 1},
@@ -206,8 +214,8 @@
                             }
                         },
                         colReorder: true,
-                        leftFixedColumns: 2,
-                        rightFixedColumns: 2,
+                        leftFixedColumns: 0,
+                        rightFixedColumns: 0,
                         ajaxData: {
                             a: 1,
                             b: 2
