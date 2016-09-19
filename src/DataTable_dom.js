@@ -535,6 +535,7 @@ define(
             var theads = $('th', table.dataTable.table().header());
             if (!sortable) {
                 theads.removeClass('sorting sorting_asc sorting_desc');
+                theads.find('i').remove();
                 return;
             }
             var actualFields = analysizeFields(table.fields).fields;
@@ -544,7 +545,12 @@ define(
                     return field.field === fieldId;
                 });
                 if (fieldConfig && fieldConfig.sortable) {
+                    $(head).find('i.ui-table-hsort').remove();
+                    $(head).append('<i class="ui-table-hsort ui-icon"></i>');
                     $(head).addClass('sorting');
+                }
+                if (fieldConfig && !fieldConfig.sortable) {
+                    $(head).find('i.ui-table-hsort').remove();
                 }
             });
         }
