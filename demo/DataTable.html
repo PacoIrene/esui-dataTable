@@ -64,6 +64,8 @@
                         data-ui-auto-sort="true"
                         data-ui-tree-grid="true"
                         class="display"></div>
+                    <button type="button" data-ui="id:selectedItems;type:Button;">getSelectedItems</button>
+                    <button type="button" data-ui="id:selectedItemsAll;type:Button;">getSelectedItemsAll</button>
                 </div>
                 <script type="text/sample" data-refid="main-js">
                 </script>
@@ -430,6 +432,20 @@
                                 }
                             ]
                         });
+                    });
+
+                    ui.get('selectedItems').on('click', function (e) {
+                        var items = ui.get('treegrid').getSelectedItems();
+                        alert('selected items\' ids exclude children: ' + items.map(function (item) {
+                            return item.id;
+                        }));
+                    });
+
+                    ui.get('selectedItemsAll').on('click', function (e) {
+                        var items = ui.get('treegrid').getSelectedItems(true);
+                        alert('selected items\' ids include children: ' + items.map(function (item) {
+                            return item.id;
+                        }));
                     });
                 }
             );

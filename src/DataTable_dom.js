@@ -95,6 +95,34 @@ define(
                 },
 
                 /**
+                 * 设置指定行号选中
+                 *
+                 * @param {Object|Array} indexes 行号数组
+                 * @param {boolean} isSelected 是否选中
+                 */
+                setRowsSelected: function (indexes, isSelected) {
+                    if (this.select === 'multi') {
+                        isSelected
+                            ? this.dataTable.rows(indexes).select()
+                            : this.dataTable.rows(indexes).deselect();
+                    }
+                },
+
+                /**
+                 * 设置指定行号选中
+                 *
+                 * @param {number} index 行号
+                 * @param {boolean} isSelected 是否选中
+                 */
+                setRowSelected: function (index, isSelected) {
+                    if (this.select !== 'single') {
+                        isSelected
+                            ? this.dataTable.row(index).select()
+                            : this.dataTable.row(index).deselect();
+                    }
+                },
+
+                /**
                  * 获取Table的选中数据项
                  *
                  * @public
@@ -102,6 +130,15 @@ define(
                  */
                 getSelectedItems: function () {
                     return this.dataTable.rows({selected: true}).data().toArray();
+                },
+
+                /**
+                 * 获取选中的行号
+                 *
+                 * @return {Array}
+                 */
+                getSelectedIndexes: function () {
+                    return this.dataTable.rows({selected: true}).indexes().toArray();
                 },
 
                 /**
@@ -676,9 +713,9 @@ define(
         }
 
         function isAllRowSelected(table) {
-            var datasource = table.datasource;
-            var selectedItems = table.getSelectedItems();
-            return selectedItems.length === datasource.length;
+            var rows = table.dataTable.rows().nodes();
+            var selectedIndexes = table.getSelectedIndexes();
+            return selectedIndexes.length === rows.length;
         }
 
         function analysizeFields(fields) {

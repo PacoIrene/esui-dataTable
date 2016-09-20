@@ -43,10 +43,35 @@ define(
                  */
                 activate: function () {
                     var target = this.target;
-                    // 只对`Table`控件生效
+                    // 只对`DataTable`控件生效
                     if (!(target instanceof DataTable)) {
                         return;
                     }
+
+                    /**
+                     * 获取Table的选中数据项
+                     *
+                     * @param {boolean} children 是否包含子节点
+                     * @return {Array}
+                     */
+                    target.getSelectedItems = function (children) {
+                        var dataTable = this.dataTable;
+                        var rows = dataTable.rows({selected: true});
+                        if (children) {
+                            return rows.data().toArray();
+                        }
+
+                        var indexes = rows.indexes().toArray();
+                        var data = [];
+                        _.map(rows.nodes(), function (node) {
+                            var row = dataTable.row($(node));
+                            var parentIndex = $(row.node()).attr('parent-index');
+                            if (parentIndex == null || !_.contains(indexes, +parentIndex)) {
+                                data.push(row.data());
+                            }
+                        });
+                        return data;
+                    };
 
                     var originalBindEvents = target.bindEvents;
 
@@ -84,12 +109,19 @@ define(
                                     var node = newRow.node();
                                     var treegridTd = $(node).find('.treegrid-control');
                                     var left = (layer + 1) * 12;
+                                    $(node).attr('parent-index', index);
                                     treegridTd.find('span').css('marginLeft', left + 'px');
                                     treegridTd.next().css('paddingLeft', paddingLeft + left + 'px');
                                     $(node).insertBefore(nextRow.node());
                                     subRows.push(node);
                                 });
+                                var selectedIndexes = target.getSelectedIndexes();
                                 target.resetBodyClass(target, target.fields);
+                                target.resetSelectMode(target, target.selectMode);
+                                target.resetSelect(target, target.select);
+                                setTimeout(function () {
+                                    target.setRowsSelected(selectedIndexes, true);
+                                }, 0);
                                 resetEvenOddClass(dataTable);
                             }
                         });
@@ -121,6 +153,41 @@ define(
                                 delete treeGridRows[index];
                             }
                             resetEvenOddClass(dataTable);
+                            var selectedIndexes = target.getSelectedIndexes();
+                            setTimeout(function () {
+                                target.setRowsSelected(selectedIndexes, true);
+                            }, 0);
+                        });
+
+                        var inProgress = false;
+                        dataTable.on('select', function (e, dt, type, indexes) {
+                            if (inProgress) {
+                                return;
+                            }
+                            inProgress = true;
+                            _.map(indexes, function (index) {
+                                // 检查父节点
+                                selectParent(dataTable, index);
+
+                                // 检查子节点
+                                selectChildren(dataTable, index);
+                            });
+                            inProgress = false;
+                        });
+
+                        dataTable.on('deselect', function (e, dt, type, indexes) {
+                            if (inProgress) {
+                                return;
+                            }
+                            inProgress = true;
+                            _.map(indexes, function (index) {
+                                // 检查父节点
+                                deselectParent(dataTable, index);
+
+                                // 检查子节点
+                                deselectChildren(dataTable, index);
+                            });
+                            inProgress = false;
                         });
                     };
                 },
@@ -147,6 +214,56 @@ define(
             $(dataTable.table().body()).find('tr').each(function (index, tr) {
                 $(tr).attr('class', classes[index % 2]);
             });
+        }
+
+        function selectParent(dataTable, index) {
+            var row = dataTable.row(index);
+            var parentIndex = $(row.node()).attr('parent-index');
+            if (parentIndex != null) {
+                parentIndex = +parentIndex;
+                var selector = '[parent-index="' + parentIndex + '"]';
+                var allChildRows = dataTable.rows(selector).nodes();
+                var selectedChildRows = dataTable.rows(selector, {selected: true}).nodes();
+                if (allChildRows.length === selectedChildRows.length) {
+                    var parentRow = dataTable.row(parentIndex, {selected: false});
+                    parentRow.select();
+                    if (parentRow.node()) {
+                        selectParent(dataTable, parentIndex);
+                    }
+                }
+            }
+        }
+        function selectChildren(dataTable, index) {
+            var rows = dataTable.rows('[parent-index="' + index + '"]', {selected: false});
+            var childIndexes = rows.indexes().toArray();
+            if (childIndexes.length) {
+                rows.select();
+                _.map(childIndexes, function (childIndex) {
+                    selectChildren(dataTable, childIndex);
+                });
+            }
+        }
+        function deselectParent(dataTable, index) {
+            var row = dataTable.row(index);
+            var parentIndex = $(row.node()).attr('parent-index');
+            if (parentIndex != null) {
+                parentIndex = +parentIndex;
+                var parentRow = dataTable.row(parentIndex, {selected: true});
+                parentRow.deselect();
+                if (parentRow.node()) {
+                    deselectParent(dataTable, parentIndex);
+                }
+            }
+        }
+        function deselectChildren(dataTable, index) {
+            var rows = dataTable.rows('[parent-index="' + index + '"]', {selected: true});
+            var childIndexes = rows.indexes().toArray();
+            if (childIndexes.length) {
+                rows.deselect();
+                _.map(childIndexes, function (childIndex) {
+                    deselectChildren(dataTable, childIndex);
+                });
+            }
         }
 
         esui.registerExtension(TreeGrid);
