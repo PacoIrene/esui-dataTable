@@ -190,7 +190,7 @@ define(
                     }
 
                     if (this.select === 'multi') {
-                        $('th.select-checkbox', header).on('click', function () {
+                        $('th.select-checkbox', header).on('click', function (e) {
                             headerTr.toggleClass('selected');
                             that.setAllRowSelected(headerTr.hasClass('selected'));
                             dataTable.fixedColumns().relayout();
@@ -497,7 +497,8 @@ define(
         function getColumnDefs(table, fields) {
             var columns = [{
                 data: null,
-                defaultContent: '',
+                defaultContent: '<div class="ui-selector-indicator">'
+                                + '<label></label></div>',
                 width: table.selectColumnWidth,
                 targets: 0
             }];
@@ -559,10 +560,11 @@ define(
             table.dataTable.rows().deselect();
 
             var operationColumn = $(table.dataTable.column(0).nodes());
-            operationColumn.removeClass('select-checkbox select-radio');
+            operationColumn.find('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
             $(table.dataTable.column(0).header()).removeClass('select-checkbox');
+            $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
 
-            operationColumn.addClass('select-indicator');
+            operationColumn.addClass('select-indicator dt-body-center');
 
             if (!select) {
                 select = 'api';
@@ -574,17 +576,18 @@ define(
             }
             if (select === 'multi') {
                 $(table.dataTable.column(0).header()).addClass('select-checkbox');
-                operationColumn.addClass('select-checkbox');
+                $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
+                operationColumn.find('.ui-selector-indicator').addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
-                operationColumn.addClass('select-radio');
+                operationColumn.find('.ui-selector-indicator').addClass('ui-radio-custom');
             }
             table.dataTable.select.style(select).fixedColumns().relayout();
         }
 
         function resetSelectMode(table, selectMode) {
             if (selectMode === 'box') {
-                table.dataTable.select.selector('td:first-child.select-indicator');
+                table.dataTable.select.selector('td:first-child.select-indicator>.ui-selector-indicator');
             }
             else if (selectMode === 'line') {
                 table.dataTable.select.selector('td');
@@ -650,7 +653,7 @@ define(
         function withComplexHeadHTML(fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
-            html.push('<th rowspan="2" class="select-checkbox"></th>');
+            html.push('<th rowspan="2" class="select-checkbox dt-head-center"></th>');
             var subHtml = ['<tr>'];
             u.each(fields, function (field) {
                 if (!field.children) {
@@ -676,7 +679,7 @@ define(
         function simpleHeadHTML(fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
-            html.push('<th rowspan="1" class="select-checkbox"></th>');
+            html.push('<th rowspan="1" class="select-checkbox dt-head-center"></th>');
             u.each(fields, function (field) {
                 html.push('<th rowspan="1" class="' + getFieldHeaderClass(field)
                         + '" data-field-id="' + field.field + '">' + createHeadTitle(field) + '</th>');
