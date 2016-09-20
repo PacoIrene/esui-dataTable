@@ -189,7 +189,7 @@ define(
                     }
 
                     if (this.select === 'multi') {
-                        $('th.select-checkbox', header).on('click', function () {
+                        $('th.select-checkbox', header).on('click', function (e) {
                             headerTr.toggleClass('selected');
                             that.setAllRowSelected(headerTr.hasClass('selected'));
                             dataTable.fixedColumns().relayout();
@@ -521,7 +521,8 @@ define(
             var index = 0;
             var columns = [{
                 data: null,
-                defaultContent: '',
+                defaultContent: '<div class="ui-selector-indicator">'
+                                + '<label></label></div>',
                 width: table.selectColumnWidth,
                 targets: index++
             }];
@@ -574,6 +575,7 @@ define(
             var theads = $('th', table.dataTable.table().header());
             if (!sortable) {
                 theads.removeClass('sorting sorting_asc sorting_desc');
+                theads.find('i').remove();
                 return;
             }
             var actualFields = analysizeFields(table.fields).fields;
@@ -583,7 +585,12 @@ define(
                     return field.field === fieldId;
                 });
                 if (fieldConfig && fieldConfig.sortable) {
+                    $(head).find('i.ui-table-hsort').remove();
+                    $(head).append('<i class="ui-table-hsort ui-icon"></i>');
                     $(head).addClass('sorting');
+                }
+                if (fieldConfig && !fieldConfig.sortable) {
+                    $(head).find('i.ui-table-hsort').remove();
                 }
             });
         }
@@ -592,11 +599,12 @@ define(
             dataTable = dataTable || table.dataTable;
             select && dataTable.rows().deselect();
 
-            var operationColumn = $(dataTable.column(0).nodes());
-            operationColumn.removeClass('select-checkbox select-radio');
-            $(dataTable.column(0).header()).removeClass('select-checkbox');
+            var operationColumn = $(table.dataTable.column(0).nodes());
+            operationColumn.find('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
+            $(table.dataTable.column(0).header()).removeClass('select-checkbox');
+            $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
 
-            operationColumn.addClass('select-indicator');
+            operationColumn.addClass('select-indicator dt-body-center');
 
             if (!select) {
                 select = 'api';
@@ -607,11 +615,12 @@ define(
                 resetSelectMode(table, table.selectMode, dataTable);
             }
             if (select === 'multi') {
-                $(dataTable.column(0).header()).addClass('select-checkbox');
-                operationColumn.addClass('select-checkbox');
+                $(table.dataTable.column(0).header()).addClass('select-checkbox');
+                $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
+                operationColumn.find('.ui-selector-indicator').addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
-                operationColumn.addClass('select-radio');
+                operationColumn.find('.ui-selector-indicator').addClass('ui-radio-custom');
             }
             try {
                 dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
@@ -624,6 +633,10 @@ define(
         function resetSelectMode(table, selectMode, dataTable) {
             if (!table.select) {
                 return;
+            }
+
+            if (selectMode === 'box') {
+                table.dataTable.select.selector('td:first-child.select-indicator>.ui-selector-indicator');
             }
             try {
                 dataTable = dataTable || table.dataTable;
@@ -700,7 +713,7 @@ define(
             var html = ['<tr>'];
             var subHtml = ['<tr>'];
             var treeGrid = table.treeGrid;
-            html.push('<th rowspan="2" class="select-checkbox"></th>');
+            html.push('<th rowspan="2" class="select-checkbox dt-head-center"></th>');
             if (treeGrid) {
                 html.push('<th rowspan="2" class="treeGrid-control"></th>');
             }
@@ -730,7 +743,7 @@ define(
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
             var treeGrid = table.treeGrid;
-            html.push('<th rowspan="1" class="select-checkbox"></th>');
+            html.push('<th rowspan="1" class="select-checkbox dt-head-center"></th>');
             if (treeGrid) {
                 html.push('<th rowspan="1" class="treegrid-control"></th>');
             }
