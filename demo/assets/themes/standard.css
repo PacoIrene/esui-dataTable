@@ -7511,3 +7511,7 @@ html {
 #selectable-demo .ui-selectable-helper {
   border: 1px dotted #666;
 }
+table.dataTable tbody table.dataTable thead th,
+table.dataTable tbody table.dataTable thead td {
+  padding: 10px 18px;
+}

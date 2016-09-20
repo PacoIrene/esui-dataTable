@@ -363,7 +363,7 @@ define(
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
                             resetSelect(table, table.select);
-                            resetFollowHead(table, table.followHead, table.followHeadOffset);
+                            resetFollowHead(dataTable, table.followHead, table.followHeadOffset);
                             table.bindEvents();
                             table.adjustWidth();
                         }
@@ -389,7 +389,7 @@ define(
                     {
                         name: ['followHead', 'followHeadOffset'],
                         paint: function (table, followHead, followHeadOffset) {
-                            resetFollowHead(table, followHead, followHeadOffset);
+                            resetFollowHead(table.dataTable, followHead, followHeadOffset);
                         }
                     },
                     {
@@ -426,6 +426,7 @@ define(
                         scrollY: table.scrollY,
                         scrollBarVis: true,
                         scrollCollapse: true,
+                        select: !!table.select,
                         language: {
                             emptyTable: table.noDataHtml,
                             paginate: {
@@ -490,6 +491,10 @@ define(
                     resetSelectMode(table, selectMode, dataTable);
                 },
 
+                resetFollowHead: function (dataTable, followHead, followHeadOffset) {
+                    resetFollowHead(dataTable, followHead, followHeadOffset);
+                },
+
                 /**
                  * 销毁释放控件
                  *
@@ -520,9 +525,9 @@ define(
                 width: table.selectColumnWidth,
                 targets: index++
             }];
-            if (table.subEntry) {
+            if (table.treeGrid) {
                 columns.push({
-                    className: 'details-control',
+                    className: 'treegrid-control',
                     orderable: false,
                     data: function (item) {
                         if (item.children && item.children.length) {
@@ -530,7 +535,7 @@ define(
                         }
                         return null;
                     },
-                    width: table.subEntryColumnWidth,
+                    width: table.treeGridColumnWidth,
                     targets: index++
                 });
             }
@@ -610,25 +615,33 @@ define(
             }
             try {
                 dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
-            } catch (exp) {}
+            }
+            catch (exp) {
+                console.log(exp);
+            }
         }
 
         function resetSelectMode(table, selectMode, dataTable) {
             if (!table.select) {
                 return;
             }
-            dataTable = dataTable || table.dataTable;
-            if (selectMode === 'box') {
-                dataTable.select.selector('td:first-child.select-indicator');
+            try {
+                dataTable = dataTable || table.dataTable;
+                if (selectMode === 'box') {
+                    dataTable.select.selector('td:first-child.select-indicator');
+                }
+                else if (selectMode === 'line') {
+                    dataTable.select.selector('td');
+                }
+                dataTable.fixedColumns().relayout();
             }
-            else if (selectMode === 'line') {
-                dataTable.select.selector('td');
+            catch (exp) {
+                console.log(exp);
             }
-            dataTable.fixedColumns().relayout();
         }
 
-        function resetFollowHead(table, followHead, followHeadOffset) {
-            var fixedHeader = table.dataTable.fixedHeader;
+        function resetFollowHead(dataTable, followHead, followHeadOffset) {
+            var fixedHeader = dataTable.fixedHeader;
             fixedHeader.enable(followHead);
             fixedHeader.headerOffset(followHeadOffset);
         }
@@ -686,10 +699,10 @@ define(
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
             var subHtml = ['<tr>'];
-            var subEntry = table.subEntry;
+            var treeGrid = table.treeGrid;
             html.push('<th rowspan="2" class="select-checkbox"></th>');
-            if (subEntry) {
-                html.push('<th rowspan="2" class="details-control"></th>');
+            if (treeGrid) {
+                html.push('<th rowspan="2" class="treeGrid-control"></th>');
             }
             fields = fields || table.fields;
             u.each(fields, function (field) {
@@ -716,10 +729,10 @@ define(
         function simpleHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
-            var subEntry = table.subEntry;
+            var treeGrid = table.treeGrid;
             html.push('<th rowspan="1" class="select-checkbox"></th>');
-            if (subEntry) {
-                html.push('<th rowspan="1" class="details-control"></th>');
+            if (treeGrid) {
+                html.push('<th rowspan="1" class="treegrid-control"></th>');
             }
             fields = fields || table.fields;
             u.each(fields, function (field) {
@@ -748,9 +761,9 @@ define(
             }
             var html = '<tfoot><tr>';
             var rows = [];
-            var subEntry = table.subEntry;
-            if (subEntry) {
-                rows.push('<th rowspan="1" class="details-control"></th>');
+            var treeGrid = table.treeGrid;
+            if (treeGrid) {
+                rows.push('<th rowspan="1" class="treegrid-control"></th>');
             }
             u.each(foot, function (item) {
                 var content = item.content || '';
@@ -802,9 +815,10 @@ define(
             select: '',
             selectMode: 'box',
             subEntry: false,
+            treeGrid: false,
             autoWidth: false,
             selectColumnWidth: 35,
-            subEntryColumnWidth: 5,
+            treeGridColumnWidth: 5,
             colReorder: false,
             leftFixedColumns: 0,
             rightFixedColumns: 0,

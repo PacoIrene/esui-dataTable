@@ -8,11 +8,12 @@
  */
 define(
     function (require) {
-        var Extension = require('esui/Extension');
         var esui = require('esui/main');
+        var Extension = require('esui/Extension');
+        var eoo = require('eoo');
         var DataTable = require('./DataTable_dom');
         var $ = require('jquery');
-        var eoo = require('eoo');
+        var _ = require('underscore');
         require('./dataTables');
         require('./dataTables.select');
         require('./dataTables.fixedColumns');
@@ -48,42 +49,53 @@ define(
                     }
 
                     var originalBindEvents = target.bindEvents;
-                    target.bindEvents = function () {
-                        originalBindEvents.call(target);
 
-                        var dataTable = target.dataTable;
+                    function recursiveBind(target, dataTable, datasource, layer, parentIndexes) {
                         dataTable.on('click', 'td.details-control', function (e) {
                             var index = dataTable.row(this).index();
+                            var indexes = parentIndexes.concat(index);
                             var row = dataTable.row(index);
-                            var data = row.data();
+                            var data = datasource[index];
                             var eventArgs = {
                                 index: index,
-                                item: data
+                                item: data,
+                                layer: layer,
+                                indexes: indexes
                             };
                             var td = $(dataTable.cell(this).node());
                             td.removeClass('details-control');
                             td.addClass('details-control-open');
                             td.html('<span class="ui-icon-minus-circle ui-eicons-fw"></span>');
                             target.fire('subrowopen', eventArgs);
-                            var subTableWrapper = $.parseHTML(''
+
+                            var subTable = $.parseHTML(''
                                 + '<table class="display" cellspacing="0" width="100%">'
                                 +     '<tbody></tbody>'
                                 + '</table>');
-                            var subTable = target.initDataTable(subTableWrapper, target, data.children, target.fields);
-                            target.helper.initChildren(subTable.table().header());
-                            row.child(subTableWrapper).show();
-                            $(row.node()).next().find('>td').css('padding', 0);
-                            target.resetBodyClass(target, target.fields, subTable);
-                            target.resetSelectMode(target, target.selectMode, subTable);
-                            target.resetSelect(target, target.select, subTable);
-                            subTable.columns.adjust();
+                            var subDataTable = target.initDataTable(subTable, target, data.children, target.fields);
+                            target.helper.initChildren(subDataTable.table().header());
+                            row.child(subTable).show();
+                            var colspan = _.filter(dataTable.context[0].aoColumns, function (column) {
+                                return column.bVisible;
+                            }).length;
+                            $(row.node()).next().find('>td').css('padding', 0).attr('colspan', colspan);
+
+                            target.resetBodyClass(target, target.fields, subDataTable);
+                            target.resetSelectMode(target, target.selectMode, subDataTable);
+                            target.resetSelect(target, target.select, subDataTable);
+                            target.resetFollowHead(subDataTable, target.followHead, target.followHeadOffset);
+                            subDataTable.columns.adjust();
+                            recursiveBind(target, subDataTable, data.children, layer + 1, indexes);
                         });
 
                         dataTable.on('click', 'td.details-control-open', function (e) {
                             var index = dataTable.row(this).index();
+                            var indexes = parentIndexes.concat(index);
                             var eventArgs = {
                                 index: index,
-                                item: dataTable.row(index).data()
+                                item: datasource[index],
+                                layer: layer,
+                                indexes: indexes
                             };
                             var td = $(dataTable.cell(this).node());
                             td.removeClass('details-control-open');
@@ -92,6 +104,14 @@ define(
                             target.fire('subrowclose', eventArgs);
                             dataTable.row(index).child().hide();
                         });
+                    }
+
+                    target.bindEvents = function () {
+                        originalBindEvents.call(target);
+
+                        var dataTable = target.dataTable;
+                        var layer = 0;
+                        recursiveBind(target, dataTable, target.datasource, layer + 1, []);
                     };
                 },
 

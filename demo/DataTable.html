@@ -55,15 +55,15 @@
                         data-ui-auto-sort="true"
                         class="display"></div>
                 </div>
-                <h2>Table Subrow</h2>
+                <h2>TreeGrid</h2>
                 <div class="example">
                     <div
-                        data-ui="type:DataTable;id:tablesubrow;columnResizable:true;variants:striped;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui="type:DataTable;id:treegrid;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
-                        data-ui-extension-tablesubrow-type="TableSubrow"
+                        data-ui-extension-treegrid-type="TreeGrid"
                         data-ui-auto-sort="true"
-                        data-ui-sub-entry="true"
+                        data-ui-tree-grid="true"
                         class="display"></div>
                 </div>
                 <script type="text/sample" data-refid="main-js">
@@ -110,8 +110,9 @@
                     'esui/extension/Command',
                     'esui/extension/AutoSort',
                     'esui/extension/CustomData',
-                    'src/TableSubrow',
                     'src/DataTable_dom',
+                    'src/TableSubrow',
+                    'src/TreeGrid',
                 ],
                 function (ui) {
                     var fields = [
@@ -269,7 +270,7 @@
                     ui.init(document.body,{
                         properties : {
                             table: tableProperties,
-                            tablesubrow: tableProperties 
+                            treegrid: tableProperties 
                         }
                     });
 
