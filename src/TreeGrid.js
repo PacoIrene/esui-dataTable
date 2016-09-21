@@ -82,7 +82,33 @@ define(
                         var treeGridRows = {};
                         var minusIcon = $('<span class="ui-icon-minus-circle ui-eicons-fw"></span>');
                         var plusIcon = $('<span class="ui-icon-plus-circle ui-eicons-fw"></span>');
+                        var marginLeft = target.treeGridMarginLeft;
 
+                        var resetTreeGridRows = function (index) {
+                            var indexes = [];
+                            if (index) {
+                                indexes.push(index);
+                            }
+                            else {
+                                for (var prop in treeGridRows) {
+                                    if (treeGridRows.hasOwnProperty(prop)) {
+                                        indexes.push(prop);
+                                    }
+                                }
+                            }
+                            _.map(indexes, function (index) {
+                                var subRows = treeGridRows[index];
+                                if (subRows && subRows.length) {
+                                    _.map(subRows, function (node) {
+                                        dataTable.row($(node)).remove();
+                                        $(node).remove();
+                                    });
+                                    delete treeGridRows[index];
+                                }
+                            });
+                        };
+
+                        // 展开TreeGrid
                         dataTable.on('click', 'td.treegrid-control', function (e) {
                             var row = dataTable.row(this);
                             var index = row.index();
@@ -95,20 +121,20 @@ define(
 
                             var td = $(dataTable.cell(this).node());
                             var paddingLeft = parseInt(td.css('padding-left'), 10);
-                            var layer = parseInt(td.find('span').css('margin-left') || 0, 10) / 12;
+                            var layer = parseInt(td.find('span').css('margin-left') || 0, 10) / marginLeft;
                             var icon = minusIcon.clone();
-                            icon.css('marginLeft', layer * 12 + 'px');
+                            icon.css('marginLeft', layer * marginLeft + 'px');
                             td.removeClass('treegrid-control').addClass('treegrid-control-open');
                             td.html('').append(icon);
 
                             if (data.children && data.children.length) {
                                 var subRows = treeGridRows[index] = [];
                                 var nextRow = dataTable.row(index + 1);
-                                data.children.forEach(function (item) {
+                                _.map(data.children, function (item) {
                                     var newRow = dataTable.row.add(item);
                                     var node = newRow.node();
                                     var treegridTd = $(node).find('.treegrid-control');
-                                    var left = (layer + 1) * 12;
+                                    var left = (layer + 1) * marginLeft;
                                     $(node).attr('parent-index', index);
                                     treegridTd.find('span').css('marginLeft', left + 'px');
                                     treegridTd.next().css('paddingLeft', paddingLeft + left + 'px');
@@ -126,6 +152,7 @@ define(
                             }
                         });
 
+                        // 收起TreeGrid
                         dataTable.on('click', 'td.treegrid-control-open', function (e) {
                             var row = dataTable.row(this);
                             var index = row.index();
@@ -138,20 +165,13 @@ define(
                             target.fire('treegridclose', eventArgs);
 
                             var td = $(dataTable.cell(this).node());
-                            var layer = parseInt(td.find('span').css('margin-left') || 0, 10) / 12;
+                            var layer = parseInt(td.find('span').css('margin-left') || 0, 10) / marginLeft;
                             var icon = plusIcon.clone();
-                            icon.css('marginLeft', layer * 12 + 'px');
+                            icon.css('marginLeft', layer * marginLeft + 'px');
                             td.removeClass('treegrid-control-open').addClass('treegrid-control');
                             td.html('').append(icon);
 
-                            var subRows = treeGridRows[index];
-                            if (subRows && subRows.length) {
-                                subRows.forEach(function (node) {
-                                    dataTable.row($(node)).remove();
-                                    $(node).remove();
-                                });
-                                delete treeGridRows[index];
-                            }
+                            resetTreeGridRows(index);
                             resetEvenOddClass(dataTable);
                             var selectedIndexes = target.getSelectedIndexes();
                             setTimeout(function () {
@@ -159,8 +179,19 @@ define(
                             }, 0);
                         });
 
+                        // 翻页重置treeGridRows
+                        dataTable.on('page', function () {
+                            resetTreeGridRows();
+                        });
+
+                        // 排序重置treeGridRows
+                        dataTable.on('sort', function () {
+                            resetTreeGridRows();
+                        });
+
                         var inProgress = false;
-                        dataTable.on('select', function (e, dt, type, indexes) {
+                        // 选择时检查父子节点
+                        target.select === 'multi' && dataTable.on('select', function (e, dt, type, indexes) {
                             if (inProgress) {
                                 return;
                             }
@@ -175,7 +206,8 @@ define(
                             inProgress = false;
                         });
 
-                        dataTable.on('deselect', function (e, dt, type, indexes) {
+                        // 取消选择时检查父子节点
+                        target.select === 'multi' && dataTable.on('deselect', function (e, dt, type, indexes) {
                             if (inProgress) {
                                 return;
                             }
@@ -199,7 +231,7 @@ define(
                  */
                 inactivate: function () {
                     var target = this.target;
-                    // 只对`Table`控件生效
+                    // 只对`DataTable`控件生效
                     if (!(target instanceof DataTable)) {
                         return;
                     }
@@ -233,6 +265,7 @@ define(
                 }
             }
         }
+
         function selectChildren(dataTable, index) {
             var rows = dataTable.rows('[parent-index="' + index + '"]', {selected: false});
             var childIndexes = rows.indexes().toArray();
@@ -243,6 +276,7 @@ define(
                 });
             }
         }
+
         function deselectParent(dataTable, index) {
             var row = dataTable.row(index);
             var parentIndex = $(row.node()).attr('parent-index');
@@ -255,6 +289,7 @@ define(
                 }
             }
         }
+
         function deselectChildren(dataTable, index) {
             var rows = dataTable.rows('[parent-index="' + index + '"]', {selected: true});
             var childIndexes = rows.indexes().toArray();

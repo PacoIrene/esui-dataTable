@@ -327,8 +327,9 @@ define(
                             item: dataTable.row(index).data(),
                             dataTable: dataTable
                         };
-                        $(dataTable.cell(this).node()).removeClass('details-control');
-                        $(dataTable.cell(this).node()).addClass('details-control-open');
+                        var td = $(dataTable.cell(this).node());
+                        td.removeClass('details-control').addClass('details-control-open');
+                        td.html('<span class="ui-icon-minus-circle ui-eicons-fw"></span>');
                         that.fire('subrowopen', eventArgs);
                     });
 
@@ -339,8 +340,9 @@ define(
                             item: dataTable.row(index).data(),
                             dataTable: dataTable
                         };
-                        $(dataTable.cell(this).node()).removeClass('details-control-open');
-                        $(dataTable.cell(this).node()).addClass('details-control');
+                        var td = $(dataTable.cell(this).node());
+                        td.removeClass('details-control-open').addClass('details-control');
+                        td.html('<span class="ui-icon-plus-circle ui-eicons-fw"></span>');
                         that.fire('subrowclose', eventArgs);
                         dataTable.row(index).child().hide();
                     });
@@ -371,84 +373,6 @@ define(
                         this.fire('resize');
                     }, this));
                 },
-
-                /**
-                 * 渲染自身
-                 *
-                 * @override
-                 * @protected
-                 */
-                repaint: painters.createRepaint(
-                    Control.prototype.repaint,
-                    {
-                        name: ['fields', 'datasource', 'foot'],
-                        paint: function (table, fields, datasource, foot) {
-                            if (table.dataTable) {
-                                table.dataTable.destroy(true);
-                            }
-                            var isComplexHead = analysizeFields(fields).isComplexHead;
-                            var headHTML = isComplexHead ? withComplexHeadHTML(table, fields)
-                                            : simpleHeadHTML(table, fields);
-                            var footHTML = createFooterHTML(table, foot);
-                            var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
-                                        + headHTML + footHTML + '<tbody></tbody></table>');
-                            $(cNode).appendTo(table.main);
-                            var dataTable = table.initDataTable(cNode, table, datasource, fields);
-                            table.dataTable = dataTable;
-                            table.helper.initChildren(dataTable.table().header());
-                            resetBodyClass(table, fields);
-                            resetSortable(table, table.sortable);
-                            resetSelectMode(table, table.selectMode);
-                            resetSelect(table, table.select);
-                            resetFollowHead(dataTable, table.followHead, table.followHeadOffset);
-                            table.bindEvents();
-                            table.adjustWidth();
-                        }
-                    },
-                    {
-                        name: 'selectMode',
-                        paint: function (table, selectMode) {
-                            resetSelectMode(table, selectMode);
-                        }
-                    },
-                    {
-                        name: 'sortable',
-                        paint: function (table, sortable) {
-                            resetSortable(table, sortable);
-                        }
-                    },
-                    {
-                        name: ['orderBy', 'order'],
-                        paint: function (table, orderBy, order) {
-                            resetFieldOrderable(table, orderBy, order);
-                        }
-                    },
-                    {
-                        name: ['followHead', 'followHeadOffset'],
-                        paint: function (table, followHead, followHeadOffset) {
-                            resetFollowHead(table.dataTable, followHead, followHeadOffset);
-                        }
-                    },
-                    {
-                        // 一共四种格式
-                        // 1. api: 只能通过api控制
-                        // 2. multi
-                        // 3. single
-                        // 4. os: 可以shift/ctrl
-                        name: 'select',
-                        paint: function (table, select) {
-                            resetSelect(table, select);
-                        }
-                    },
-                    {
-                        name: 'width',
-                        paint: function (table, width) {
-                            $(table.main).css('width', width);
-                            table.adjustWidth();
-                            table.fire('resize');
-                        }
-                    }
-                ),
 
                 initDataTable: function (cNode, table, datasource, fields) {
                     var options = {
@@ -533,6 +457,84 @@ define(
                 },
 
                 /**
+                 * 渲染自身
+                 *
+                 * @override
+                 * @protected
+                 */
+                repaint: painters.createRepaint(
+                    Control.prototype.repaint,
+                    {
+                        name: ['fields', 'datasource', 'foot'],
+                        paint: function (table, fields, datasource, foot) {
+                            if (table.dataTable) {
+                                table.dataTable.destroy(true);
+                            }
+                            var isComplexHead = analysizeFields(fields).isComplexHead;
+                            var headHTML = isComplexHead ? withComplexHeadHTML(table, fields)
+                                            : simpleHeadHTML(table, fields);
+                            var footHTML = createFooterHTML(table, foot);
+                            var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
+                                        + headHTML + footHTML + '<tbody></tbody></table>');
+                            $(cNode).appendTo(table.main);
+                            var dataTable = table.initDataTable(cNode, table, datasource, fields);
+                            table.dataTable = dataTable;
+                            table.helper.initChildren(dataTable.table().header());
+                            resetBodyClass(table, fields);
+                            resetSortable(table, table.sortable);
+                            resetSelectMode(table, table.selectMode);
+                            resetSelect(table, table.select);
+                            resetFollowHead(dataTable, table.followHead, table.followHeadOffset);
+                            table.bindEvents();
+                            table.adjustWidth();
+                        }
+                    },
+                    {
+                        name: 'selectMode',
+                        paint: function (table, selectMode) {
+                            resetSelectMode(table, selectMode);
+                        }
+                    },
+                    {
+                        name: 'sortable',
+                        paint: function (table, sortable) {
+                            resetSortable(table, sortable);
+                        }
+                    },
+                    {
+                        name: ['orderBy', 'order'],
+                        paint: function (table, orderBy, order) {
+                            resetFieldOrderable(table, orderBy, order);
+                        }
+                    },
+                    {
+                        name: ['followHead', 'followHeadOffset'],
+                        paint: function (table, followHead, followHeadOffset) {
+                            resetFollowHead(table.dataTable, followHead, followHeadOffset);
+                        }
+                    },
+                    {
+                        // 一共四种格式
+                        // 1. api: 只能通过api控制
+                        // 2. multi
+                        // 3. single
+                        // 4. os: 可以shift/ctrl
+                        name: 'select',
+                        paint: function (table, select) {
+                            resetSelect(table, select);
+                        }
+                    },
+                    {
+                        name: 'width',
+                        paint: function (table, width) {
+                            $(table.main).css('width', width);
+                            table.adjustWidth();
+                            table.fire('resize');
+                        }
+                    }
+                ),
+
+                /**
                  * 销毁释放控件
                  *
                  * @override
@@ -563,6 +565,20 @@ define(
                 width: table.selectColumnWidth,
                 targets: index++
             }];
+            if (table.subEntry) {
+                columns.push({
+                    className: 'details-control',
+                    orderable: false,
+                    data: function (item) {
+                        if (item.subrow) {
+                            return '<span class="ui-icon-plus-circle ui-eicons-fw"></span>';
+                        }
+                        return null;
+                    },
+                    width: table.subEntryColumnWidth,
+                    targets: index++
+                });
+            }
             if (table.treeGrid) {
                 columns.push({
                     className: 'treegrid-control',
@@ -749,8 +765,12 @@ define(
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
             var subHtml = ['<tr>'];
+            var subEntry = table.subEntry;
             var treeGrid = table.treeGrid;
             html.push('<th rowspan="2" class="select-checkbox dt-head-center"></th>');
+            if (subEntry) {
+                html.push('<th rowspan="2" class="details-control"></th>');
+            }
             if (treeGrid) {
                 html.push('<th rowspan="2" class="treeGrid-control"></th>');
             }
@@ -779,8 +799,12 @@ define(
         function simpleHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
+            var subEntry = table.subEntry;
             var treeGrid = table.treeGrid;
             html.push('<th rowspan="1" class="select-checkbox dt-head-center"></th>');
+            if (subEntry) {
+                html.push('<th rowspan="1" class="details-control"></th>');
+            }
             if (treeGrid) {
                 html.push('<th rowspan="1" class="treegrid-control"></th>');
             }
@@ -811,7 +835,11 @@ define(
             }
             var html = '<tfoot><tr>';
             var rows = [];
+            var subEntry = table.subEntry;
             var treeGrid = table.treeGrid;
+            if (subEntry) {
+                rows.push('<th rowspan="1" class="details-control"></th>');
+            }
             if (treeGrid) {
                 rows.push('<th rowspan="1" class="treegrid-control"></th>');
             }
@@ -866,8 +894,10 @@ define(
             selectMode: 'box',
             subEntry: false,
             treeGrid: false,
+            treeGridMarginLeft: 12,
             autoWidth: false,
             selectColumnWidth: 35,
+            subEntryColumnWidth: 5,
             treeGridColumnWidth: 5,
             colReorder: false,
             leftFixedColumns: 0,

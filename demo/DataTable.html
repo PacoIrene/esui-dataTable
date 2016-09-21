@@ -54,6 +54,16 @@
                         data-ui-auto-sort="true"
                         class="display"></div>
                 </div>
+                <h2>Subrow</h2>
+                <div class="example">
+                    <div
+                        data-ui="type:DataTable;id:subrow;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui-extension-tableedit-type="TableEdit"
+                        data-ui-extension-autosort-type="AutoSort"
+                        data-ui-auto-sort="true"
+                        data-ui-sub-entry="true"
+                        class="display"></div>
+                </div>
                 <h2>TreeGrid</h2>
                 <div class="example">
                     <div
@@ -65,7 +75,7 @@
                         data-ui-tree-grid="true"
                         class="display"></div>
                     <button type="button" data-ui="id:selectedItems;type:Button;">getSelectedItems</button>
-                    <button type="button" data-ui="id:selectedItemsAll;type:Button;">getSelectedItemsAll</button>
+                    <button type="button" data-ui="id:selectedItemsAll;type:Button;">getSelectedItems(true)</button>
                 </div>
                 <script type="text/sample" data-refid="main-js">
                 </script>
@@ -94,8 +104,8 @@
                         {id:11, name: 'child_erik', sex: 1}
                     ]
                 },
-                {id:6, name: '0', sex: 1},
-                {id:3, name: 'frank', sex: 1},
+                {id:6, name: '0', sex: 1, subrow: true},
+                {id:3, name: 'frank', sex: 1, subrow: true},
                 {id:2, name: 'tony', sex: 0},
                 {id:5, name: 'false', sex: 1},
                 {id:1, name: 'erik', sex: 1}
@@ -112,7 +122,6 @@
                     'esui/extension/AutoSort',
                     'esui/extension/CustomData',
                     'src/DataTable_dom',
-                    'src/TableSubrow',
                     'src/TreeGrid',
                 ],
                 function (ui) {
@@ -271,6 +280,7 @@
                     ui.init(document.body,{
                         properties : {
                             table: tableProperties,
+                            subrow: tableProperties,
                             treegrid: tableProperties 
                         }
                     });
@@ -432,6 +442,16 @@
                                 }
                             ]
                         });
+                    });
+
+                    ui.get('subrow').on('subrowopen', function (e) {
+                        var content = [];
+                        for (var prop in e.item) {
+                            if (e.item.hasOwnProperty(prop)) {
+                                content.push(prop + ':' + e.item[prop]);
+                            }
+                        }
+                        ui.get('subrow').setSubrowContent(content.join(', '), e.index);
                     });
 
                     ui.get('selectedItems').on('click', function (e) {
