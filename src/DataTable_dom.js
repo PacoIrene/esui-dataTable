@@ -357,6 +357,7 @@ define(
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
                             var options = {
+                                dom: 'rtipl',
                                 data: datasource,
                                 info: false,
                                 searching: false,
