@@ -93,6 +93,7 @@ define(
                     //     return;
                     // }
                     isSelected ? this.dataTable.rows().select() : this.dataTable.rows().deselect();
+                    this.dataTable.fixedColumns().relayout();
                 },
 
                 /**
@@ -254,7 +255,6 @@ define(
 
                                 that.fire('sort', {field: fieldConfig, order: order});
                             }
-                            dataTable.fixedColumns().relayout();
                         });
                     }
                     else {
@@ -280,7 +280,6 @@ define(
 
                                 that.fire('sort', {field: field, order: order});
                             }
-                            dataTable.fixedColumns().relayout();
                         });
                     }
 
@@ -545,6 +544,7 @@ define(
             if (!sortable) {
                 theads.removeClass('sorting sorting_asc sorting_desc');
                 theads.find('i').remove();
+                table.dataTable.fixedColumns().relayout();
                 return;
             }
             var actualFields = analysizeFields(table.fields).fields;
@@ -562,6 +562,7 @@ define(
                     $(head).find('i.ui-table-hsort').remove();
                 }
             });
+            table.dataTable.fixedColumns().relayout();
         }
 
         function resetSelect(table, select) {
@@ -623,6 +624,7 @@ define(
                     $(head).addClass('sorting sorting_' + order);
                 }
             });
+            table.dataTable.fixedColumns().relayout();
         }
 
         function isAllRowSelected(table) {
