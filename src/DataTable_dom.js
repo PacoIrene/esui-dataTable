@@ -1,4 +1,3 @@
-// 直接灌
 define(
     function (require) {
         var u = require('underscore');
@@ -14,6 +13,7 @@ define(
         // !IMPORTANT
         // fixedColumns 一定要require在fixedHeader之前 否则会出bug
         require('./dataTables.fixedColumns');
+        // fixedHeader 目前看还有些bug
         require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
         // colReorder 与 复合表头不能同时使用 会出bug
@@ -389,6 +389,7 @@ define(
 
                 initDataTable: function (cNode, table, datasource, fields) {
                     var options = {
+                        dom: 'rtipl',
                         data: datasource,
                         info: false,
                         searching: false,
@@ -472,7 +473,7 @@ define(
                             var headHTML = isComplexHead ? withComplexHeadHTML(table, fields)
                                             : simpleHeadHTML(table, fields);
                             var footHTML = createFooterHTML(table, foot);
-                            var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
+                            var cNode = $.parseHTML('<table class="display dtr-inline" cellspacing="0" width="100%">'
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
                             var dataTable = table.initDataTable(cNode, table, datasource, fields);
@@ -556,9 +557,16 @@ define(
 
         function getColumnDefs(table, fields) {
             var index = 0;
+            var selectClass = 'ui-selector-indicator';
+            if (table.select === 'multi') {
+                selectClass += ' ui-checkbox-custom';
+            }
+            else if (table.select === 'single') {
+                selectClass += ' ui-radio-custom';
+            }
             var columns = [{
                 data: null,
-                defaultContent: '<div class="ui-selector-indicator">'
+                defaultContent: '<div class="' + selectClass + '">'
                                 + '<label></label></div>',
                 width: table.selectColumnWidth,
                 targets: index++
@@ -651,7 +659,7 @@ define(
             select && dataTable.rows().deselect();
 
             var operationColumn = $(table.dataTable.column(0).nodes());
-            operationColumn.find('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
+            operationColumn.children('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
             $(table.dataTable.column(0).header()).removeClass('select-checkbox');
             $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
 
@@ -668,10 +676,10 @@ define(
             if (select === 'multi') {
                 $(table.dataTable.column(0).header()).addClass('select-checkbox');
                 $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
-                operationColumn.find('.ui-selector-indicator').addClass('ui-checkbox-custom');
+                operationColumn.children('.ui-selector-indicator').addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
-                operationColumn.find('.ui-selector-indicator').addClass('ui-radio-custom');
+                operationColumn.children('.ui-selector-indicator').addClass('ui-radio-custom');
             }
             try {
                 dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
@@ -727,7 +735,7 @@ define(
         }
 
         function isAllRowSelected(table) {
-            var rows = table.dataTable.rows().nodes();
+            var rows = $(table.dataTable.body()).find('tr[role="row"]');
             var selectedIndexes = table.getSelectedIndexes();
             return selectedIndexes.length === rows.length;
         }
