@@ -568,7 +568,7 @@ define(
             table.dataTable.rows().deselect();
 
             var operationColumn = $(table.dataTable.column(0).nodes());
-            operationColumn.find('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
+            operationColumn.children('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
             $(table.dataTable.column(0).header()).removeClass('select-checkbox');
             $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
 
@@ -585,10 +585,10 @@ define(
             if (select === 'multi') {
                 $(table.dataTable.column(0).header()).addClass('select-checkbox');
                 $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
-                operationColumn.find('.ui-selector-indicator').addClass('ui-checkbox-custom');
+                operationColumn.children('.ui-selector-indicator').addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
-                operationColumn.find('.ui-selector-indicator').addClass('ui-radio-custom');
+                operationColumn.children('.ui-selector-indicator').addClass('ui-radio-custom');
             }
             table.dataTable.select.style(select).fixedColumns().relayout();
         }
