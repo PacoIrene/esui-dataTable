@@ -52,6 +52,8 @@
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
                         data-ui-auto-sort="true"
+                        data-ui-left-fixed-columns="2"
+                        data-ui-right-fixed-columns="2"
                         class="display"></div>
                 </div>
                 <h2>Subrow</h2>
@@ -62,6 +64,8 @@
                         data-ui-extension-autosort-type="AutoSort"
                         data-ui-auto-sort="true"
                         data-ui-sub-entry="true"
+                        data-ui-left-fixed-columns="0"
+                        data-ui-right-fixed-columns="0"
                         class="display"></div>
                 </div>
                 <h2>TreeGrid</h2>
@@ -70,9 +74,10 @@
                         data-ui="type:DataTable;id:treegrid;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
-                        data-ui-extension-treegrid-type="TreeGrid"
                         data-ui-auto-sort="true"
                         data-ui-tree-grid="true"
+                        data-ui-left-fixed-columns="0"
+                        data-ui-right-fixed-columns="0"
                         class="display"></div>
                     <button type="button" data-ui="id:selectedItems;type:Button;">getSelectedItems</button>
                     <button type="button" data-ui="id:selectedItemsAll;type:Button;">getSelectedItems(true)</button>
@@ -104,11 +109,10 @@
                         {id:11, name: 'child_erik', sex: 1}
                     ]
                 },
-                {id:6, name: '0', sex: 1, subrow: true},
+                {id:5, name: '0', sex: 1, subrow: true},
                 {id:3, name: 'frank', sex: 1, subrow: true},
                 {id:2, name: 'tony', sex: 0},
-                {id:5, name: 'false', sex: 1},
-                {id:1, name: 'erik', sex: 1}
+                {id:1, name: 'false', sex: 1},
             ];
             var myTable = null;
             require(
@@ -122,7 +126,6 @@
                     'esui/extension/AutoSort',
                     'esui/extension/CustomData',
                     'src/DataTable_dom',
-                    'src/TreeGrid',
                 ],
                 function (ui) {
                     var fields = [
@@ -207,6 +210,7 @@
                             }
                         }
                     ];
+                    fields = fields.concat(easyFields, easyFields, easyFields);
                     var lib = require('esui/lib');
                     var newData = [];
                     for (var i = 0; i !== 16; i++) {
@@ -225,13 +229,11 @@
                             }
                         },
                         colReorder: true,
-                        leftFixedColumns: 0,
-                        rightFixedColumns: 0,
                         ajaxData: {
                             a: 1,
                             b: 2
                         },
-                        datasource: data,
+                        datasource: newData,
                         fields: fields,
                         foot: [
                             {},

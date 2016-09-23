@@ -18,6 +18,7 @@ define(
         require('./dataTables.scroller');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
+        require('./dataTables.treeGrid');
 
         var DataTable = eoo.create(
             Control,
@@ -109,16 +110,22 @@ define(
                 },
 
                 /**
-                 * 设置指定行号选中
+                 * 设置行选中
                  *
-                 * @param {number} index 行号
+                 * @param {number|Array} index 行号
                  * @param {boolean} isSelected 是否选中
+                 * @public
                  */
                 setRowSelected: function (index, isSelected) {
-                    if (this.select !== 'single') {
-                        isSelected
-                            ? this.dataTable.row(index).select()
-                            : this.dataTable.row(index).deselect();
+                    if (this.select !== 'multi' && this.select !== 'single') {
+                        return;
+                    }
+                    isSelected ? this.dataTable.row(index).select() : this.dataTable.row(index).deselect();
+                    if (isAllRowSelected(this)) {
+                        $('tr', this.dataTable.table().header()).addClass('selected');
+                    }
+                    else {
+                        $('tr', this.dataTable.table().header()).removeClass('selected');
                     }
                 },
 
@@ -329,7 +336,7 @@ define(
                         };
                         var td = $(dataTable.cell(this).node());
                         td.removeClass('details-control').addClass('details-control-open');
-                        td.html('<span class="ui-icon-minus-circle ui-eicons-fw"></span>');
+                        td.html(that.minusIcon);
                         that.fire('subrowopen', eventArgs);
                     });
 
@@ -342,9 +349,15 @@ define(
                         };
                         var td = $(dataTable.cell(this).node());
                         td.removeClass('details-control-open').addClass('details-control');
-                        td.html('<span class="ui-icon-plus-circle ui-eicons-fw"></span>');
+                        td.html(that.plusIcon);
                         that.fire('subrowclose', eventArgs);
                         dataTable.row(index).child().hide();
+                    });
+
+                    dataTable.on('click', 'td.treegrid-control', function () {
+                        resetBodyClass(that, that.fields);
+                        resetSelectMode(that, that.selectMode);
+                        resetSelect(that, that.select);
                     });
 
                     var delegate = Event.delegate;
@@ -387,7 +400,7 @@ define(
                         scrollY: table.scrollY,
                         scrollBarVis: true,
                         scrollCollapse: true,
-                        select: !!table.select,
+                        select: table.select,
                         language: {
                             emptyTable: table.noDataHtml,
                             paginate: {
@@ -400,6 +413,11 @@ define(
                         fixedColumns: {
                             leftColumns: table.leftFixedColumns,
                             rightColumns: table.rightFixedColumns
+                        },
+                        treeGrid: {
+                            left: 12,
+                            expandIcon: table.plusIcon,
+                            collapseIcon: table.minusIcon
                         },
                         colReorder: table.colReorder,
                         autoWidth: table.autoWidth,
@@ -414,26 +432,6 @@ define(
 
                 getSubrowContainer: function (index) {
                     return this.getChild('subrow-panel-' + index);
-                },
-
-                /**
-                 * 设置行选中
-                 *
-                 * @param {number|Array} index 行号
-                 * @param {boolean} isSelected 是否选中
-                 * @public
-                 */
-                setRowSelected: function (index, isSelected) {
-                    if (this.select !== 'multi' && this.select !== 'single') {
-                        return;
-                    }
-                    isSelected ? this.dataTable.row(index).select() : this.dataTable.row(index).deselect();
-                    if (isAllRowSelected(this)) {
-                        $('tr', this.dataTable.table().header()).addClass('selected');
-                    }
-                    else {
-                        $('tr', this.dataTable.table().header()).removeClass('selected');
-                    }
                 },
 
                 addRowBuilders: function () {},
@@ -571,7 +569,7 @@ define(
                     orderable: false,
                     data: function (item) {
                         if (item.subrow) {
-                            return '<span class="ui-icon-plus-circle ui-eicons-fw"></span>';
+                            return table.plusIcon;
                         }
                         return null;
                     },
@@ -585,7 +583,7 @@ define(
                     orderable: false,
                     data: function (item) {
                         if (item.children && item.children.length) {
-                            return '<span class="ui-icon-plus-circle ui-eicons-fw"></span>';
+                            return table.plusIcon;
                         }
                         return null;
                     },
@@ -899,6 +897,8 @@ define(
             selectColumnWidth: 35,
             subEntryColumnWidth: 5,
             treeGridColumnWidth: 5,
+            plusIcon: '<span class="ui-icon-plus-circle ui-eicons-fw"></span>',
+            minusIcon: '<span class="ui-icon-minus-circle ui-eicons-fw"></span>',
             colReorder: false,
             leftFixedColumns: 0,
             rightFixedColumns: 0,
