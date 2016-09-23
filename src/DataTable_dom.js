@@ -1,4 +1,3 @@
-// 直接灌
 define(
     function (require) {
         var u = require('underscore');
@@ -15,6 +14,7 @@ define(
         // !IMPORTANT
         // fixedColumns 一定要require在fixedHeader之前 否则会出bug
         require('./dataTables.fixedColumns');
+        // fixedHeader 目前看还有些bug
         require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
         // colReorder 与 复合表头不能同时使用 会出bug
@@ -353,7 +353,7 @@ define(
                             var headHTML = isComplexHead ? withComplexHeadHTML(fields)
                                             : simpleHeadHTML(fields);
                             var footHTML = createFooterHTML(table, foot);
-                            var cNode = $.parseHTML('<table class="display" cellspacing="0" width="100%">'
+                            var cNode = $.parseHTML('<table class="display dtr-inline" cellspacing="0" width="100%">'
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
                             var options = {
@@ -496,9 +496,16 @@ define(
         );
 
         function getColumnDefs(table, fields) {
+            var selectClass = 'ui-selector-indicator';
+            if (table.select === 'multi') {
+                selectClass += ' ui-checkbox-custom';
+            }
+            else if (table.select === 'single') {
+                selectClass += ' ui-radio-custom';
+            }
             var columns = [{
                 data: null,
-                defaultContent: '<div class="ui-selector-indicator">'
+                defaultContent: '<div class="' + selectClass + '">'
                                 + '<label></label></div>',
                 width: table.selectColumnWidth,
                 targets: 0
