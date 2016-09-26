@@ -422,6 +422,11 @@ define(
 
                 addHandlers: function () {},
 
+                /**
+                 * 设置fixed的header
+                 *
+                 * @public
+                 */
                 headReseter: function () {
                     if (!this.followHead) {
                         return;
@@ -474,7 +479,8 @@ define(
          * 重置fixed的表头的left值
          *
          * @private
-         * @param {ui.Table} table table控件实例
+         * @param {ui.DataTable} table table控件实例
+         * @param {jQuery.dom} node 容器的jquery对象
          */
         function resetFixedHeadLeft(table, node) {
             var tableScrollLeft = node[0].scrollLeft;
@@ -488,7 +494,13 @@ define(
             }
         }
 
-        function headerClickHandler (event) {
+        /**
+         * 重置fixed的表头的left值
+         *
+         * @private
+         * @param {Event} event header的点击事件
+         */
+        function headerClickHandler(event) {
             var table = event.data.table;
             var fieldId = $(this).attr('data-field-id');
             var actualFields = analysizeFields(table.fields).fields;
@@ -513,8 +525,17 @@ define(
 
                 table.fire('sort', {field: fieldConfig, order: order});
             }
-        };
+        }
 
+
+        /**
+         * 获取Datatable的column配置
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} fields fields
+         * @return {Array} columns
+         */
         function getColumnDefs(table, fields) {
             var selectClass = table.helper.getPartClasses('selector-indicator');
             if (table.select === 'multi') {
@@ -545,6 +566,13 @@ define(
             return columns;
         }
 
+        /**
+         * 重置datable的body的className
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} fields fields
+         */
         function resetBodyClass(table, fields) {
             var columnDefs = table.dataTable.settings()[0].aoColumns;
             var actualFields = analysizeFields(table.fields).fields;
@@ -560,6 +588,13 @@ define(
             });
         }
 
+        /**
+         * 重置排序
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {boolean} sortable 是否可排序
+         */
         function resetSortable(table, sortable) {
             var theads = $('th', table.dataTable.table().header());
             if (!sortable) {
@@ -586,6 +621,13 @@ define(
             table.dataTable.fixedColumns().relayout();
         }
 
+        /**
+         * 重置select
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {boolean} select 是否select
+         */
         function resetSelect(table, select) {
             table.dataTable.rows().deselect();
 
@@ -620,6 +662,13 @@ define(
             table.dataTable.select.style(select).fixedColumns().relayout();
         }
 
+        /**
+         * 重置selectMode
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {string} selectMode 选择器的type
+         */
         function resetSelectMode(table, selectMode) {
             if (selectMode === 'box') {
                 var selector = 'td:first-child.' + table.helper.getPartClasses('select-column') + '>.'
@@ -632,6 +681,14 @@ define(
             table.dataTable.fixedColumns().relayout();
         }
 
+        /**
+         * 重置排序规则
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {string} orderBy 排序的基准
+         * @param {string} order 升序或降序
+         */
         function resetFieldOrderable(table, orderBy, order) {
             orderBy = orderBy || table.orderBy;
             var theads = $('th', table.dataTable.table().header());
@@ -649,12 +706,26 @@ define(
             table.dataTable.fixedColumns().relayout();
         }
 
+        /**
+         * 判断是够全选
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @return {boolean} 是否全选
+         */
         function isAllRowSelected(table) {
             var datasource = table.datasource;
             var selectedItems = table.getSelectedItems();
             return selectedItems.length === datasource.length;
         }
 
+        /**
+         * 从table的配置项中抽取实际上的配置
+         *
+         * @private
+         * @param {Array} fields fields
+         * @return {Object} config
+         */
         function analysizeFields(fields) {
             var actualFields = [];
             var isComplexHead = false;
@@ -673,15 +744,37 @@ define(
             };
         }
 
+        /**
+         * 获取头部的class
+         *
+         * @private
+         * @param {Object} field field的配置
+         * @return {string} class name
+         */
         function getFieldHeaderClass(field) {
             return 'dt-head-' + (field.align || 'left');
         }
+
+        /**
+         * 构建head中th的text
+         *
+         * @private
+         * @param {Object} field field的配置
+         * @return {string} th内容
+         */
         function createHeadTitle(field) {
             return field.tip ? '<div '
                     + 'data-ui="type:Tip;content:' + field.tip + '">'
                     + '</div>' + field.title : field.title;
         }
 
+        /**
+         * 构建带有复合表头head的html
+         *
+         * @private
+         * @param {Array} fields field的配置
+         * @return {string} html
+         */
         function withComplexHeadHTML(fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
@@ -708,6 +801,13 @@ define(
             return HeadHTML;
         }
 
+        /**
+         * 构建正常head的html
+         *
+         * @private
+         * @param {Array} fields field的配置
+         * @return {string} html
+         */
         function simpleHeadHTML(fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
@@ -722,6 +822,14 @@ define(
             return HeadHTML;
         }
 
+        /**
+         * 构建footer的html
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} foot foot的配置
+         * @return {string} html
+         */
         function createFooterHTML(table, foot) {
             if (!foot) {
                 return '';
