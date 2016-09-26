@@ -182,6 +182,7 @@ define(
                     var dataTable = this.dataTable;
                     var header = dataTable.table().header();
                     var headerTr = $('tr', header);
+                    var scrollContainer = $(this.dataTable.table().body()).parents('.dataTables_scrollBody');
 
                     var fixedColumnsDom = null;
                     if (dataTable.fixedColumns().settings()[0]._oFixedColumns) {
@@ -261,6 +262,11 @@ define(
 
 
                     this.helper.addDOMEvent(window, 'scroll', this.headReseter);
+
+                    scrollContainer.on('scroll', function (e) {
+                        that.fire('scroll');
+                        resetFixedHeadLeft(that, scrollContainer);
+                    });
 
                     var delegate = Event.delegate;
                     delegate(
@@ -426,6 +432,7 @@ define(
                                     + dataTable.body().offsetHeight
                                     + dataTable.footer().offsetHeight;
                     var followTop = lib.getOffset(this.main).top;
+
                     if (scrollTop > followTop
                         && (scrollTop - followTop < mainHeight)) {
                         $(this.dataTable.table().header()).parent().css({
@@ -463,6 +470,23 @@ define(
             }
         );
 
+        /**
+         * 重置fixed的表头的left值
+         *
+         * @private
+         * @param {ui.Table} table table控件实例
+         */
+        function resetFixedHeadLeft(table, node) {
+            var tableScrollLeft = node[0].scrollLeft;
+            var domHead = $(table.dataTable.table().header()).parent();
+            var posStyle = domHead.css('position');
+            if (posStyle === 'fixed') {
+                var scrollLeft = lib.page.getScrollLeft();
+
+                var curLeft = table.main.getBoundingClientRect().left - scrollLeft;
+                domHead.css('left', curLeft - scrollLeft - tableScrollLeft);
+            }
+        }
 
         function headerClickHandler (event) {
             var table = event.data.table;
