@@ -495,7 +495,7 @@ define(
         );
 
         function getColumnDefs(table, fields) {
-            var selectClass = 'ui-selector-indicator';
+            var selectClass = table.helper.getPartClasses('selector-indicator');
             if (table.select === 'multi') {
                 selectClass += ' ui-checkbox-custom';
             }
@@ -569,11 +569,14 @@ define(
             table.dataTable.rows().deselect();
 
             var operationColumn = $(table.dataTable.column(0).nodes());
-            operationColumn.children('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
+            var selectColumnClass = table.helper.getPartClasses('select-column');
+
+            operationColumn.children(table.helper.getPartClasses('selector-indicator'))
+                            .removeClass('ui-checkbox-custom ui-radio-custom');
             $(table.dataTable.column(0).header()).removeClass('select-checkbox');
             $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
 
-            operationColumn.addClass('select-indicator dt-body-center');
+            operationColumn.addClass(selectColumnClass + ' dt-body-center');
 
             if (!select) {
                 select = 'api';
@@ -586,17 +589,21 @@ define(
             if (select === 'multi') {
                 $(table.dataTable.column(0).header()).addClass('select-checkbox');
                 $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
-                operationColumn.children('.ui-selector-indicator').addClass('ui-checkbox-custom');
+                operationColumn.children(table.helper.getPartClasses('selector-indicator'))
+                                .addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
-                operationColumn.children('.ui-selector-indicator').addClass('ui-radio-custom');
+                operationColumn.children(table.helper.getPartClasses('selector-indicator'))
+                            .addClass('ui-radio-custom');
             }
             table.dataTable.select.style(select).fixedColumns().relayout();
         }
 
         function resetSelectMode(table, selectMode) {
             if (selectMode === 'box') {
-                table.dataTable.select.selector('td:first-child.select-indicator>.ui-selector-indicator');
+                var selector = 'td:first-child.' + table.helper.getPartClasses('select-column') + '>.'
+                                + table.helper.getPartClasses('selector-indicator');
+                table.dataTable.select.selector(selector);
             }
             else if (selectMode === 'line') {
                 table.dataTable.select.selector('td');

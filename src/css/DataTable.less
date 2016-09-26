@@ -240,12 +240,12 @@ table.dataTable.stripe tbody > tr.odd > .selected, table.dataTable.display tbody
 table.dataTable.display tbody > tr.odd > .selected {
     background-color: @esui-palette-neutral-highlight-color;
 }
-table.dataTable tr.selected td.select-indicator .ui-selector-indicator > label:before,
+table.dataTable tr.selected td.ui-datatable-select-column .ui-datatable-selector-indicator > label:before,
 table.dataTable tr.selected th.select-checkbox .ui-checkbox-custom > label:before {
     background: @esui-palette-primary-color;
     border-color: @esui-palette-primary-color;
 }
-table.dataTable tr.selected td.select-indicator .ui-checkbox-custom > label:after,
+table.dataTable tr.selected td.ui-datatable-select-column .ui-checkbox-custom > label:after,
 table.dataTable tr.selected th.select-checkbox .ui-checkbox-custom > label:after {
     position: absolute;
     top: 0.245em;
@@ -262,7 +262,7 @@ table.dataTable tr.selected th.select-checkbox .ui-checkbox-custom > label:after
     transform: rotate(-45deg);
 }
 
-table.dataTable tr.selected td.select-indicator .ui-radio-custom > label:after {
+table.dataTable tr.selected td.ui-datatable-select-column .ui-radio-custom > label:after {
     top: 0;
     left: 0;
     width: 1em;
