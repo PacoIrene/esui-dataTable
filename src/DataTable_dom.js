@@ -18,7 +18,6 @@ define(
         require('./dataTables.scroller');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
-        require('./dataTables.treeGrid');
 
         var DataTable = eoo.create(
             Control,
@@ -354,12 +353,6 @@ define(
                         dataTable.row(index).child().hide();
                     });
 
-                    dataTable.on('click', 'td.treegrid-control', function () {
-                        resetBodyClass(that, that.fields);
-                        resetSelectMode(that, that.selectMode);
-                        resetSelect(that, that.select);
-                    });
-
                     var delegate = Event.delegate;
                     delegate(
                         dataTable, 'startdrag',
@@ -416,7 +409,7 @@ define(
                             rightColumns: table.rightFixedColumns
                         },
                         treeGrid: {
-                            left: 12,
+                            left: table.treeGridLeft,
                             expandIcon: table.plusIcon,
                             collapseIcon: table.minusIcon
                         },
@@ -900,7 +893,7 @@ define(
             selectMode: 'box',
             subEntry: false,
             treeGrid: false,
-            treeGridMarginLeft: 12,
+            treeGridLeft: 12,
             autoWidth: false,
             selectColumnWidth: 35,
             subEntryColumnWidth: 5,
