@@ -14,8 +14,6 @@ define(
         // !IMPORTANT
         // fixedColumns 一定要require在fixedHeader之前 否则会出bug
         require('./dataTables.fixedColumns');
-        // fixedHeader 目前看还有些bug
-        require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
@@ -53,7 +51,7 @@ define(
                 },
 
                 initStructure: function () {
-
+                    this.main.style.zIndex = this.zIndex || '';
                 },
 
                 /**
@@ -231,56 +229,10 @@ define(
                     });
 
                     if (fixedColumnsDom) {
-                        $(fixedColumnsDom.header).on('click', 'th.sorting', function () {
-                            var fieldId = $(this).attr('data-field-id');
-                            var actualFields = analysizeFields(that.fields).fields;
-                            var fieldConfig = u.find(actualFields, function (field) {
-                                return field.field === fieldId;
-                            });
-                            if (fieldConfig && fieldConfig.sortable) {
-                                var orderBy = that.orderBy;
-                                var order = that.order;
-
-                                if (orderBy === fieldConfig.field) {
-                                    order = (!order || order === 'asc') ? 'desc' : 'asc';
-                                }
-                                else {
-                                    order = 'desc';
-                                }
-
-                                that.setProperties({
-                                    order: order,
-                                    orderBy: fieldConfig.field
-                                });
-
-                                that.fire('sort', {field: fieldConfig, order: order});
-                            }
-                        });
+                        $(fixedColumnsDom.header).on('click', 'th.sorting', {table: that}, headerClickHandler);
                     }
                     else {
-                        $(header).on('click', 'th.sorting', function () {
-                            var field = null;
-                            var index = dataTable.column(this).index();
-                            field = analysizeFields(that.fields).fields[index - 1];
-                            if (field.sortable) {
-                                var orderBy = that.orderBy;
-                                var order = that.order;
-
-                                if (orderBy === field.field) {
-                                    order = (!order || order === 'asc') ? 'desc' : 'asc';
-                                }
-                                else {
-                                    order = 'desc';
-                                }
-
-                                that.setProperties({
-                                    order: order,
-                                    orderBy: field.field
-                                });
-
-                                that.fire('sort', {field: field, order: order});
-                            }
-                        });
+                        $(header).on('click', 'th.sorting', {table: that}, headerClickHandler);
                     }
 
                     dataTable.on('click', 'td.details-control', function (e) {
@@ -306,6 +258,9 @@ define(
                         that.fire('subrowclose', eventArgs);
                         dataTable.row(index).child().hide();
                     });
+
+
+                    this.helper.addDOMEvent(window, 'scroll', this.headReseter);
 
                     var delegate = Event.delegate;
                     delegate(
@@ -362,7 +317,6 @@ define(
                                 searching: false,
                                 paging: table.clientPaging,
                                 processing: true,
-                                fixedHeader: true,
                                 ordering: false,
                                 scrollX: true,
                                 scrollY: table.scrollY,
@@ -377,10 +331,7 @@ define(
                                     processing: table.processingText,
                                     lengthMenu: table.lengthMenu
                                 },
-                                fixedColumns: {
-                                    leftColumns: table.leftFixedColumns,
-                                    rightColumns: table.rightFixedColumns
-                                },
+                                fixedColumns: false,
                                 colReorder: table.colReorder,
                                 autoWidth: table.autoWidth,
                                 columnDefs: getColumnDefs(table, fields)
@@ -392,7 +343,6 @@ define(
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
                             resetSelect(table, table.select);
-                            resetFollowHead(table, table.followHead, table.followHeadOffset);
                             table.bindEvents();
                             table.adjustWidth();
                         }
@@ -413,12 +363,6 @@ define(
                         name: ['orderBy', 'order'],
                         paint: function (table, orderBy, order) {
                             resetFieldOrderable(table, orderBy, order);
-                        }
-                    },
-                    {
-                        name: ['followHead', 'followHeadOffset'],
-                        paint: function (table, followHead, followHeadOffset) {
-                            resetFollowHead(table, followHead, followHeadOffset);
                         }
                     },
                     {
@@ -472,6 +416,28 @@ define(
 
                 addHandlers: function () {},
 
+                headReseter: function () {
+                    if (!this.followHead) {
+                        return;
+                    }
+                    var scrollTop = lib.page.getScrollTop();
+                    var mainHeight = this.main.offsetHeight;
+                    var followTop = lib.getOffset(this.main).top;
+                    if (scrollTop > followTop
+                        && (scrollTop - followTop < mainHeight)) {
+                        $(this.dataTable.table().header()).parent().css({
+                            'position': 'fixed',
+                            'top': this.followHeadOffset,
+                            'z-index': this.zIndex + 1
+                        });
+                    }
+                    else {
+                        $(this.dataTable.table().header()).parent().css({
+                            'position': 'static'
+                        });
+                    }
+                },
+
                 /**
                  * 销毁释放控件
                  *
@@ -493,6 +459,34 @@ define(
                 }
             }
         );
+
+
+        function headerClickHandler (event) {
+            var table = event.data.table;
+            var fieldId = $(this).attr('data-field-id');
+            var actualFields = analysizeFields(table.fields).fields;
+            var fieldConfig = u.find(actualFields, function (field) {
+                return field.field === fieldId;
+            });
+            if (fieldConfig && fieldConfig.sortable) {
+                var orderBy = table.orderBy;
+                var order = table.order;
+
+                if (orderBy === fieldConfig.field) {
+                    order = (!order || order === 'asc') ? 'desc' : 'asc';
+                }
+                else {
+                    order = 'desc';
+                }
+
+                table.setProperties({
+                    order: order,
+                    orderBy: fieldConfig.field
+                });
+
+                table.fire('sort', {field: fieldConfig, order: order});
+            }
+        };
 
         function getColumnDefs(table, fields) {
             var selectClass = table.helper.getPartClasses('selector-indicator');
@@ -609,12 +603,6 @@ define(
                 table.dataTable.select.selector('td');
             }
             table.dataTable.fixedColumns().relayout();
-        }
-
-        function resetFollowHead(table, followHead, followHeadOffset) {
-            var fixedHeader = table.dataTable.fixedHeader;
-            fixedHeader.enable(followHead);
-            fixedHeader.headerOffset(followHeadOffset);
         }
 
         function resetFieldOrderable(table, orderBy, order) {
@@ -783,7 +771,8 @@ define(
             pagePrevious: '上一页',
             pageNext: '下一页',
             scrollY: null,
-            lengthMenu: '每页显示_MENU_'
+            lengthMenu: '每页显示_MENU_',
+            zIndex: 0
         };
 
         esui.register(DataTable);
