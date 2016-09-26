@@ -44,7 +44,11 @@
 .@{ui-class-prefix}-datatable table.dataTable tfoot th,
 .@{ui-class-prefix}-datatable table.dataTable tfoot td,
 .@{ui-class-prefix}-datatable table.dataTable tbody th,
-.@{ui-class-prefix}-datatable table.dataTable tbody td {
+.@{ui-class-prefix}-datatable table.dataTable tbody td,
+table.fixedHeader-floating thead th,
+table.fixedHeader-floating thead td,
+table.fixedHeader-floating tfoot th,
+table.fixedHeader-floating tfoot td {
     padding: @esui-datatable-cell-text-padding;
 }
 
@@ -214,16 +218,19 @@
 /*
  * fixedHeader
  */
-.@{ui-class-prefix}-datatable table.fixedHeader-floating {
-    position: fixed !important;
-}
-.@{ui-class-prefix}-datatable table.fixedHeader-floating.no-footer {
-    border-bottom-width: 0;
-}
-.@{ui-class-prefix}-datatable table.fixedHeader-locked {
-    position: absolute !important;
+table.fixedHeader-floating {
+  position: fixed !important;
+  .esui-datatable-head-theme();
 }
 
+table.fixedHeader-floating.no-footer {
+  border-bottom-width: 0;
+}
+
+table.fixedHeader-locked {
+  position: absolute !important;
+  .esui-datatable-head-theme();
+}
 
 /*
  * Select
