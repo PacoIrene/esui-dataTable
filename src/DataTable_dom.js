@@ -421,7 +421,10 @@ define(
                         return;
                     }
                     var scrollTop = lib.page.getScrollTop();
-                    var mainHeight = this.main.offsetHeight;
+                    var dataTable = this.dataTable.table();
+                    var mainHeight = dataTable.header().offsetHeight
+                                    + dataTable.body().offsetHeight
+                                    + dataTable.footer().offsetHeight;
                     var followTop = lib.getOffset(this.main).top;
                     if (scrollTop > followTop
                         && (scrollTop - followTop < mainHeight)) {
