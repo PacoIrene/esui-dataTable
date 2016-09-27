@@ -1,8 +1,8 @@
 {
     "name": "esui-datatable",
-    "version": "1.0.1-alpha.1",
+    "version": "1.0.1-alpha.2",
     "description": "edp project",
-    "main": "index.js",
+    "main": "DataTable.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
     },
@@ -27,7 +27,10 @@
     },
     "dependencies": {},
     "author": "",
-    "repository": "empty",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/PacoIrene/esui-dataTable.git"
+    },
     "license": "BSD",
     "readme": "README"
 }
