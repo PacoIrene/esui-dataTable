@@ -11,15 +11,10 @@ define(
         var esui = require('esui/main');
         var Extension = require('esui/Extension');
         var eoo = require('eoo');
-        var DataTable = require('./DataTable');
+        var DataTable = require('../DataTable');
         var $ = require('jquery');
         var _ = require('underscore');
-        require('./dataTables');
-        require('./dataTables.select');
-        require('./dataTables.fixedColumns');
-        require('./dataTables.scroller');
-        require('./dataTables.colReorder');
-        require('./dataTables.treeGrid');
+        require('../dataTables.treeGrid');
 
         /**
          * 表格子行扩展

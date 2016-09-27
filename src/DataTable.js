@@ -11,11 +11,7 @@ define(
         // page客户端分页 与 全选 全不选 存在性能问题
         require('./dataTables');
         require('./dataTables.select');
-        // !IMPORTANT
-        // fixedColumns 一定要require在fixedHeader之前 否则会出bug
         require('./dataTables.fixedColumns');
-        require('./dataTables.scroller');
-        // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
 
         var DataTable = eoo.create(
