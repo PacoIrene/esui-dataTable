@@ -43,7 +43,8 @@ define(
                  */
                 initOptions: function (options) {
                     var properties = {
-                        handlers: []
+                        handlers: [],
+                        selectedIndex: []
                     };
 
                     u.extend(properties, DataTable.defaultProperties, options, options.extendOptions);
@@ -243,11 +244,15 @@ define(
                         if (isAllRowSelected(that)) {
                             headerTr.addClass('selected');
                         }
-                        that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
+                        var selectedIndex = dt.rows({selected: true}).indexes().toArray();
+                        that.selectedIndex = selectedIndex;
+                        that.fire('select', {selectedIndex: selectedIndex});
                     });
                     dataTable.on('deselect', function (e, dt, type, indexes) {
                         headerTr.removeClass('selected');
-                        that.fire('select', {selectedIndex: dt.rows({selected: true}).indexes().toArray()});
+                        var selectedIndex = dt.rows({selected: true}).indexes().toArray();
+                        that.selectedIndex = selectedIndex;
+                        that.fire('select', {selectedIndex: selectedIndex});
                         that.adjustWidth();
                     });
 
