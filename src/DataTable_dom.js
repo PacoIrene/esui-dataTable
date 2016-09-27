@@ -727,7 +727,7 @@ define(
             }
             else {
                 dataTable.column(0).visible(true);
-                resetSelectMode(table, table.selectMode, dataTable);
+                resetSelectMode(table, table.selectMode);
             }
             if (select === 'multi') {
                 $(dataTable.column(0).header()).addClass('select-checkbox');
@@ -739,12 +739,7 @@ define(
                 operationColumn.children(table.helper.getPartClasses('selector-indicator'))
                     .addClass('ui-radio-custom');
             }
-            try {
-                dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
-            }
-            catch (exp) {
-                console.log(exp);
-            }
+            dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
         }
 
         /**
@@ -761,19 +756,10 @@ define(
                                 + table.helper.getPartClasses('selector-indicator');
                 table.dataTable.select.selector(selector);
             }
-            try {
-                dataTable = dataTable || table.dataTable;
-                if (selectMode === 'box') {
-                    dataTable.select.selector('td:first-child.select-indicator');
-                }
-                else if (selectMode === 'line') {
-                    dataTable.select.selector('td');
-                }
-                dataTable.fixedColumns().relayout();
+            else if (selectMode === 'line') {
+                dataTable.select.selector('td');
             }
-            catch (exp) {
-                console.log(exp);
-            }
+            dataTable.fixedColumns().relayout();
         }
 
         /**
