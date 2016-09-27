@@ -5,6 +5,7 @@ define(
         var painters = require('esui/painters');
         var esui = require('esui/main');
         var eoo = require('eoo');
+        var lib = require('esui/lib');
         var $ = require('jquery');
         var Event = require('mini-event');
         // page客户端分页 与 全选 全不选 存在性能问题
@@ -13,8 +14,6 @@ define(
         // !IMPORTANT
         // fixedColumns 一定要require在fixedHeader之前 否则会出bug
         require('./dataTables.fixedColumns');
-        // fixedHeader 目前看还有些bug
-        require('./dataTables.fixedHeader');
         require('./dataTables.scroller');
         // colReorder 与 复合表头不能同时使用 会出bug
         require('./dataTables.colReorder');
@@ -52,7 +51,7 @@ define(
                 },
 
                 initStructure: function () {
-
+                    this.main.style.zIndex = this.zIndex || '';
                 },
 
                 /**
@@ -226,6 +225,7 @@ define(
                     var dataTable = this.dataTable;
                     var header = dataTable.table().header();
                     var headerTr = $('tr', header);
+                    var scrollContainer = $(this.dataTable.table().body()).parents('.dataTables_scrollBody');
 
                     var fixedColumnsDom = null;
                     if (dataTable.fixedColumns().settings()[0]._oFixedColumns) {
@@ -273,56 +273,10 @@ define(
                     });
 
                     if (fixedColumnsDom) {
-                        $(fixedColumnsDom.header).on('click', 'th.sorting', function () {
-                            var fieldId = $(this).attr('data-field-id');
-                            var actualFields = analysizeFields(that.fields).fields;
-                            var fieldConfig = u.find(actualFields, function (field) {
-                                return field.field === fieldId;
-                            });
-                            if (fieldConfig && fieldConfig.sortable) {
-                                var orderBy = that.orderBy;
-                                var order = that.order;
-
-                                if (orderBy === fieldConfig.field) {
-                                    order = (!order || order === 'asc') ? 'desc' : 'asc';
-                                }
-                                else {
-                                    order = 'desc';
-                                }
-
-                                that.setProperties({
-                                    order: order,
-                                    orderBy: fieldConfig.field
-                                });
-
-                                that.fire('sort', {field: fieldConfig, order: order});
-                            }
-                        });
+                        $(fixedColumnsDom.header).on('click', 'th.sorting', {table: that}, headerClickHandler);
                     }
                     else {
-                        $(header).on('click', 'th.sorting', function () {
-                            var field = null;
-                            var index = dataTable.column(this).index();
-                            field = analysizeFields(that.fields).fields[index - 1];
-                            if (field.sortable) {
-                                var orderBy = that.orderBy;
-                                var order = that.order;
-
-                                if (orderBy === field.field) {
-                                    order = (!order || order === 'asc') ? 'desc' : 'asc';
-                                }
-                                else {
-                                    order = 'desc';
-                                }
-
-                                that.setProperties({
-                                    order: order,
-                                    orderBy: field.field
-                                });
-
-                                that.fire('sort', {field: field, order: order});
-                            }
-                        });
+                        $(header).on('click', 'th.sorting', {table: that}, headerClickHandler);
                     }
 
                     dataTable.on('click', 'td.details-control', function (e) {
@@ -350,6 +304,14 @@ define(
                         td.html(that.plusIcon);
                         that.fire('subrowclose', eventArgs);
                         dataTable.row(index).child().hide();
+                    });
+
+
+                    this.helper.addDOMEvent(window, 'scroll', this.headReseter);
+
+                    scrollContainer.on('scroll', function (e) {
+                        that.fire('scroll');
+                        resetFixedHeadLeft(that, scrollContainer);
                     });
 
                     var delegate = Event.delegate;
@@ -387,7 +349,6 @@ define(
                         searching: false,
                         paging: table.clientPaging,
                         processing: true,
-                        fixedHeader: true,
                         ordering: false,
                         scrollX: true,
                         scrollY: table.scrollY,
@@ -403,15 +364,12 @@ define(
                             processing: table.processingText,
                             lengthMenu: table.lengthMenu
                         },
-                        fixedColumns: {
-                            leftColumns: table.leftFixedColumns,
-                            rightColumns: table.rightFixedColumns
-                        },
                         treeGrid: {
                             left: table.treeGridLeft,
                             expandIcon: table.plusIcon,
                             collapseIcon: table.minusIcon
                         },
+                        fixedColumns: false,
                         colReorder: table.colReorder,
                         autoWidth: table.autoWidth,
                         columnDefs: getColumnDefs(table, fields)
@@ -431,20 +389,16 @@ define(
 
                 addHandlers: function () {},
 
-                resetBodyClass: function (table, fields, dataTable) {
-                    resetBodyClass(table, fields, dataTable);
+                resetBodyClass: function (table, fields) {
+                    resetBodyClass(table, fields);
                 },
 
-                resetSelect: function (table, select, dataTable) {
-                    resetSelect(table, select, dataTable);
+                resetSelect: function (table, select) {
+                    resetSelect(table, select);
                 },
 
-                resetSelectMode: function (table, selectMode, dataTable) {
-                    resetSelectMode(table, selectMode, dataTable);
-                },
-
-                resetFollowHead: function (dataTable, followHead, followHeadOffset) {
-                    resetFollowHead(dataTable, followHead, followHeadOffset);
+                resetSelectMode: function (table, selectMode) {
+                    resetSelectMode(table, selectMode);
                 },
 
                 /**
@@ -475,7 +429,6 @@ define(
                             resetSortable(table, table.sortable);
                             resetSelectMode(table, table.selectMode);
                             resetSelect(table, table.select);
-                            resetFollowHead(dataTable, table.followHead, table.followHeadOffset);
                             table.bindEvents();
                             table.adjustWidth();
                         }
@@ -496,12 +449,6 @@ define(
                         name: ['orderBy', 'order'],
                         paint: function (table, orderBy, order) {
                             resetFieldOrderable(table, orderBy, order);
-                        }
-                    },
-                    {
-                        name: ['followHead', 'followHeadOffset'],
-                        paint: function (table, followHead, followHeadOffset) {
-                            resetFollowHead(table.dataTable, followHead, followHeadOffset);
                         }
                     },
                     {
@@ -526,6 +473,37 @@ define(
                 ),
 
                 /**
+                 * 设置fixed的header
+                 *
+                 * @public
+                 */
+                headReseter: function () {
+                    if (!this.followHead) {
+                        return;
+                    }
+                    var scrollTop = lib.page.getScrollTop();
+                    var dataTable = this.dataTable.table();
+                    var mainHeight = dataTable.header().offsetHeight
+                                    + dataTable.body().offsetHeight
+                                    + dataTable.footer().offsetHeight;
+                    var followTop = lib.getOffset(this.main).top;
+
+                    if (scrollTop > followTop
+                        && (scrollTop - followTop < mainHeight)) {
+                        $(this.dataTable.table().header()).parent().css({
+                            'position': 'fixed',
+                            'top': this.followHeadOffset,
+                            'z-index': this.zIndex + 1
+                        });
+                    }
+                    else {
+                        $(this.dataTable.table().header()).parent().css({
+                            'position': 'static'
+                        });
+                    }
+                },
+
+                /**
                  * 销毁释放控件
                  *
                  * @override
@@ -547,9 +525,70 @@ define(
             }
         );
 
+        /**
+         * 重置fixed的表头的left值
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {jQuery.dom} node 容器的jquery对象
+         */
+        function resetFixedHeadLeft(table, node) {
+            var tableScrollLeft = node[0].scrollLeft;
+            var domHead = $(table.dataTable.table().header()).parent();
+            var posStyle = domHead.css('position');
+            if (posStyle === 'fixed') {
+                var scrollLeft = lib.page.getScrollLeft();
+
+                var curLeft = table.main.getBoundingClientRect().left - scrollLeft;
+                domHead.css('left', curLeft - scrollLeft - tableScrollLeft);
+            }
+        }
+
+        /**
+         * 重置fixed的表头的left值
+         *
+         * @private
+         * @param {Event} event header的点击事件
+         */
+        function headerClickHandler(event) {
+            var table = event.data.table;
+            var fieldId = $(this).attr('data-field-id');
+            var actualFields = analysizeFields(table.fields).fields;
+            var fieldConfig = u.find(actualFields, function (field) {
+                return field.field === fieldId;
+            });
+            if (fieldConfig && fieldConfig.sortable) {
+                var orderBy = table.orderBy;
+                var order = table.order;
+
+                if (orderBy === fieldConfig.field) {
+                    order = (!order || order === 'asc') ? 'desc' : 'asc';
+                }
+                else {
+                    order = 'desc';
+                }
+
+                table.setProperties({
+                    order: order,
+                    orderBy: fieldConfig.field
+                });
+
+                table.fire('sort', {field: fieldConfig, order: order});
+            }
+        }
+
+
+        /**
+         * 获取Datatable的column配置
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} fields fields
+         * @return {Array} columns
+         */
         function getColumnDefs(table, fields) {
             var index = 0;
-            var selectClass = 'ui-selector-indicator';
+            var selectClass = table.helper.getPartClasses('selector-indicator');
             if (table.select === 'multi') {
                 selectClass += ' ui-checkbox-custom';
             }
@@ -606,8 +645,14 @@ define(
             return columns;
         }
 
-        function resetBodyClass(table, fields, dataTable) {
-            dataTable = dataTable || table.dataTable;
+        /**
+         * 重置datable的body的className
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} fields fields
+         */
+        function resetBodyClass(table, fields) {
             var columnDefs = table.dataTable.settings()[0].aoColumns;
             var actualFields = analysizeFields(table.fields).fields;
             u.each(columnDefs, function (def, index) {
@@ -617,11 +662,18 @@ define(
                 });
                 if (fieldConfig) {
                     var alignClass = 'dt-body-' + (fieldConfig.align || 'left');
-                    $(dataTable.column(index).nodes()).addClass(alignClass);
+                    $(table.dataTable.column(index).nodes()).addClass(alignClass);
                 }
             });
         }
 
+        /**
+         * 重置排序
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {boolean} sortable 是否可排序
+         */
         function resetSortable(table, sortable) {
             var theads = $('th', table.dataTable.table().header());
             if (!sortable) {
@@ -648,16 +700,26 @@ define(
             table.dataTable.fixedColumns().relayout();
         }
 
-        function resetSelect(table, select, dataTable) {
-            dataTable = dataTable || table.dataTable;
-            select && dataTable.rows().deselect();
+        /**
+         * 重置select
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {boolean} select 是否select
+         */
+        function resetSelect(table, select) {
+            var dataTable = table.dataTable;
+            dataTable.rows().deselect();
 
-            var operationColumn = $(table.dataTable.column(0).nodes());
-            operationColumn.children('.ui-selector-indicator').removeClass('ui-checkbox-custom ui-radio-custom');
-            $(table.dataTable.column(0).header()).removeClass('select-checkbox');
-            $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
+            var operationColumn = $(dataTable.column(0).nodes());
+            var selectColumnClass = table.helper.getPartClasses('select-column');
 
-            operationColumn.addClass('select-indicator dt-body-center');
+            operationColumn.children(table.helper.getPartClasses('selector-indicator'))
+                .removeClass('ui-checkbox-custom ui-radio-custom');
+            $(dataTable.column(0).header()).removeClass('select-checkbox');
+            $(dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
+
+            operationColumn.addClass(selectColumnClass + ' dt-body-center');
 
             if (!select) {
                 select = 'api';
@@ -668,12 +730,14 @@ define(
                 resetSelectMode(table, table.selectMode, dataTable);
             }
             if (select === 'multi') {
-                $(table.dataTable.column(0).header()).addClass('select-checkbox');
-                $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
-                operationColumn.children('.ui-selector-indicator').addClass('ui-checkbox-custom');
+                $(dataTable.column(0).header()).addClass('select-checkbox');
+                $(dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
+                operationColumn.children(table.helper.getPartClasses('selector-indicator'))
+                    .addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
-                operationColumn.children('.ui-selector-indicator').addClass('ui-radio-custom');
+                operationColumn.children(table.helper.getPartClasses('selector-indicator'))
+                    .addClass('ui-radio-custom');
             }
             try {
                 dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
@@ -683,13 +747,19 @@ define(
             }
         }
 
-        function resetSelectMode(table, selectMode, dataTable) {
-            if (!table.select) {
-                return;
-            }
-
+        /**
+         * 重置selectMode
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {string} selectMode 选择器的type
+         */
+        function resetSelectMode(table, selectMode) {
+            var dataTable = table.dataTable;
             if (selectMode === 'box') {
-                table.dataTable.select.selector('td:first-child.select-indicator>.ui-selector-indicator');
+                var selector = 'td:first-child.' + table.helper.getPartClasses('select-column') + '>.'
+                                + table.helper.getPartClasses('selector-indicator');
+                table.dataTable.select.selector(selector);
             }
             try {
                 dataTable = dataTable || table.dataTable;
@@ -706,12 +776,14 @@ define(
             }
         }
 
-        function resetFollowHead(dataTable, followHead, followHeadOffset) {
-            var fixedHeader = dataTable.fixedHeader;
-            fixedHeader.enable(followHead);
-            fixedHeader.headerOffset(followHeadOffset);
-        }
-
+        /**
+         * 重置排序规则
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {string} orderBy 排序的基准
+         * @param {string} order 升序或降序
+         */
         function resetFieldOrderable(table, orderBy, order) {
             orderBy = orderBy || table.orderBy;
             var theads = $('th', table.dataTable.table().header());
@@ -729,12 +801,26 @@ define(
             table.dataTable.fixedColumns().relayout();
         }
 
+        /**
+         * 判断是够全选
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @return {boolean} 是否全选
+         */
         function isAllRowSelected(table) {
             var rows = $(table.dataTable.body()).find('tr[role="row"]');
             var selectedIndexes = table.getSelectedIndexes();
             return selectedIndexes.length === rows.length;
         }
 
+        /**
+         * 从table的配置项中抽取实际上的配置
+         *
+         * @private
+         * @param {Array} fields fields
+         * @return {Object} config
+         */
         function analysizeFields(fields) {
             var actualFields = [];
             var isComplexHead = false;
@@ -753,15 +839,38 @@ define(
             };
         }
 
+        /**
+         * 获取头部的class
+         *
+         * @private
+         * @param {Object} field field的配置
+         * @return {string} class name
+         */
         function getFieldHeaderClass(field) {
             return 'dt-head-' + (field.align || 'left');
         }
+
+        /**
+         * 构建head中th的text
+         *
+         * @private
+         * @param {Object} field field的配置
+         * @return {string} th内容
+         */
         function createHeadTitle(field) {
             return field.tip ? '<div '
                     + 'data-ui="type:Tip;content:' + field.tip + '">'
                     + '</div>' + field.title : field.title;
         }
 
+        /**
+         * 构建带有复合表头head的html
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} fields field的配置
+         * @return {string} html
+         */
         function withComplexHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
@@ -797,6 +906,14 @@ define(
             return HeadHTML;
         }
 
+        /**
+         * 构建正常head的html
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} fields field的配置
+         * @return {string} html
+         */
         function simpleHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
@@ -820,6 +937,14 @@ define(
             return HeadHTML;
         }
 
+        /**
+         * 构建footer的html
+         *
+         * @private
+         * @param {ui.DataTable} table table控件实例
+         * @param {Array} foot foot的配置
+         * @return {string} html
+         */
         function createFooterHTML(table, foot) {
             if (!foot) {
                 return '';
@@ -910,7 +1035,8 @@ define(
             pagePrevious: '上一页',
             pageNext: '下一页',
             scrollY: null,
-            lengthMenu: '每页显示_MENU_'
+            lengthMenu: '每页显示_MENU_',
+            zIndex: 0
         };
 
         esui.register(DataTable);

@@ -7295,7 +7295,11 @@ span.ui-crumb-node {
 .ui-datatable table.dataTable tfoot th,
 .ui-datatable table.dataTable tfoot td,
 .ui-datatable table.dataTable tbody th,
-.ui-datatable table.dataTable tbody td {
+.ui-datatable table.dataTable tbody td,
+table.fixedHeader-floating thead th,
+table.fixedHeader-floating thead td,
+table.fixedHeader-floating tfoot th,
+table.fixedHeader-floating tfoot td {
   padding: 1em;
 }
 .ui-datatable table.dataTable thead th:active,
@@ -7459,14 +7463,16 @@ span.ui-crumb-node {
 /*
  * fixedHeader
  */
-.ui-datatable table.fixedHeader-floating {
+table.fixedHeader-floating {
   position: fixed !important;
+  background: #f6f6f6;
 }
-.ui-datatable table.fixedHeader-floating.no-footer {
+table.fixedHeader-floating.no-footer {
   border-bottom-width: 0;
 }
-.ui-datatable table.fixedHeader-locked {
+table.fixedHeader-locked {
   position: absolute !important;
+  background: #f6f6f6;
 }
 /*
  * Select
@@ -7481,12 +7487,12 @@ table.dataTable.display tbody > tr.odd.selected,
 table.dataTable.display tbody > tr.odd > .selected {
   background-color: #FBFBFB;
 }
-table.dataTable tr.selected td.select-indicator .ui-selector-indicator > label:before,
+table.dataTable tr.selected td.ui-datatable-select-column .ui-datatable-selector-indicator > label:before,
 table.dataTable tr.selected th.select-checkbox .ui-checkbox-custom > label:before {
   background: #70CCC0;
   border-color: #70CCC0;
 }
-table.dataTable tr.selected td.select-indicator .ui-checkbox-custom > label:after,
+table.dataTable tr.selected td.ui-datatable-select-column .ui-checkbox-custom > label:after,
 table.dataTable tr.selected th.select-checkbox .ui-checkbox-custom > label:after {
   position: absolute;
   top: 0.245em;
@@ -7502,7 +7508,7 @@ table.dataTable tr.selected th.select-checkbox .ui-checkbox-custom > label:after
   -o-transform: rotate(-45deg);
   transform: rotate(-45deg);
 }
-table.dataTable tr.selected td.select-indicator .ui-radio-custom > label:after {
+table.dataTable tr.selected td.ui-datatable-select-column .ui-radio-custom > label:after {
   top: 0;
   left: 0;
   width: 1em;
