@@ -52,8 +52,36 @@
                         data-ui-extension-tableedit-type="TableEdit"
                         data-ui-extension-autosort-type="AutoSort"
                         data-ui-auto-sort="true"
-                        data-ui-sub-entry="true"
+                        data-ui-left-fixed-columns="2"
+                        data-ui-right-fixed-columns="2"
                         class="display"></div>
+                </div>
+                <h2>Subrow</h2>
+                <div class="example">
+                    <div
+                        data-ui="type:DataTable;id:subrow;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui-extension-tableedit-type="TableEdit"
+                        data-ui-extension-autosort-type="AutoSort"
+                        data-ui-auto-sort="true"
+                        data-ui-sub-entry="true"
+                        data-ui-left-fixed-columns="0"
+                        data-ui-right-fixed-columns="0"
+                        class="display"></div>
+                </div>
+                <h2>TreeGrid</h2>
+                <div class="example">
+                    <div
+                        data-ui="type:DataTable;id:treegrid;columnResizable:true;variants:striped;select:multi;selectMode:box;sortable:true;followHead:true;ajaxUrl:../url/ajax;ajaxMethod:POST;orderBy:id;order:asc"
+                        data-ui-extension-tableedit-type="TableEdit"
+                        data-ui-extension-autosort-type="AutoSort"
+                        data-ui-extension-treegrid-type="TreeGrid"
+                        data-ui-auto-sort="true"
+                        data-ui-tree-grid="true"
+                        data-ui-left-fixed-columns="0"
+                        data-ui-right-fixed-columns="0"
+                        class="display"></div>
+                    <button type="button" data-ui="id:selectedItems;type:Button;">getSelectedItems</button>
+                    <button type="button" data-ui="id:selectedItemsAll;type:Button;">getSelectedItems(true)</button>
                 </div>
                 <script type="text/sample" data-refid="main-js">
                 </script>
@@ -65,14 +93,27 @@
         <script src="assets/google-code-prettify/prettify.js"></script>
         <script id="main-js">
             var data = [
-                {id:4, name: 'meimei', sex: 1},
-                {id:6, name: '0', sex: 1},
-                {id:3, name: 'frank', sex: 1},
+                {id:4, name: 'meimei', sex: 1,
+                    children: [
+                        {id:66, name: 'child_0', sex: 1,
+                            children: [
+                                {id:666, name: 'child_child_0', sex: 1},
+                                {id:333, name: 'child_child_frank', sex: 1},
+                                {id:222, name: 'child_child_tony', sex: 0},
+                                {id:555, name: 'child_child_false', sex: 1},
+                                {id:111, name: 'child_child_erik', sex: 1}
+                            ]
+                        },
+                        {id:33, name: 'child_frank', sex: 1},
+                        {id:22, name: 'child_tony', sex: 0},
+                        {id:55, name: 'child_false', sex: 1},
+                        {id:11, name: 'child_erik', sex: 1}
+                    ]
+                },
+                {id:5, name: '0', sex: 1, subrow: true},
+                {id:3, name: 'frank', sex: 1, subrow: true},
                 {id:2, name: 'tony', sex: 0},
-                {id:5, name: 'false', sex: 1},
-                {id:6, name: '0', sex: 1},
-                {id:3, name: 'frank', sex: 1},
-                {id:2, name: 'tony', sex: 0},
+                {id:1, name: 'false', sex: 1},
             ];
             var myTable = null;
             require(
@@ -82,11 +123,11 @@
                     'esui/Panel',
                     'esui/SearchBox',
                     'esui/extension/TableEdit',
-                    'esui/extension/TableSubrow',
                     'esui/extension/Command',
                     'esui/extension/AutoSort',
                     'esui/extension/CustomData',
                     'src/DataTable_dom',
+                    'src/TreeGrid'
                 ],
                 function (ui) {
                     var fields = [
@@ -142,7 +183,6 @@
                             field: 'operation',
                             resizable : true,
                             width: 120,
-                            sortable: true,
                             content: function (item) {
                                 return '操作';
                             }
@@ -172,78 +212,80 @@
                             }
                         }
                     ];
+                    fields = fields.concat(easyFields, easyFields, easyFields);
                     var lib = require('esui/lib');
                     var newData = [];
-                    for (var i = 0; i !== 200; i++) {
+                    for (var i = 0; i !== 16; i++) {
                         newData = newData.concat(data);
                     }
+                    var tableProperties = {
+                        serverSide: false,
+                        autoWidth: true,
+                        followHead: false,
+                        clientPaging: true,
+                        scrollY: 300,
+                        extendOptions: {
+                            fixedHeader: {
+                                header: true,
+                                footer: true
+                            }
+                        },
+                        colReorder: true,
+                        ajaxData: {
+                            a: 1,
+                            b: 2
+                        },
+                        datasource: newData,
+                        fields: fields,
+                        foot: [
+                            {},
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                align: 'right',
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            }
+                        ],
+                        neck: [
+                            {},
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                align: 'right',
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            },
+                            {
+                                content: function (item) {
+                                    return 'item.id';
+                                }
+                            }
+                        ]
+                    };
                     ui.init(document.body,{
                         properties : {
-                            table: {
-                                serverSide: false,
-                                autoWidth: true,
-                                followHead: false,
-                                clientPaging: true,
-                                scrollY: 300,
-                                extendOptions: {
-                                    fixedHeader: {
-                                        header: true,
-                                        footer: true
-                                    }
-                                },
-                                colReorder: true,
-                                leftFixedColumns: 0,
-                                rightFixedColumns: 0,
-                                ajaxData: {
-                                    a: 1,
-                                    b: 2
-                                },
-                                datasource: newData,
-                                fields: fields,
-                                foot: [
-                                    {},
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        align: 'right',
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    }
-                                ],
-                                neck: [
-                                    {},
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        align: 'right',
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    },
-                                    {
-                                        content: function (item) {
-                                            return 'item.id';
-                                        }
-                                    }
-                                ]
-                            }
+                            table: tableProperties,
+                            subrow: tableProperties,
+                            treegrid: tableProperties 
                         }
                     });
 
@@ -337,10 +379,10 @@
                     });
 
                     ui.get('table').onsubrowopen = function (e) {
-                        this.setSubrowContent(
-                            '<span style="line-height:30px;">Hello ' + e.item.name + '</span>',
-                            e.index
-                        );
+                        // this.setSubrowContent(
+                            // '<span style="line-height:30px;">Hello ' + e.item.name + '</span>',
+                            // e.index
+                        // );
                     };
 
                     ui.get('table').onsubrowclose = function (e) {
@@ -404,6 +446,30 @@
                                 }
                             ]
                         });
+                    });
+
+                    ui.get('subrow').on('subrowopen', function (e) {
+                        var content = [];
+                        for (var prop in e.item) {
+                            if (e.item.hasOwnProperty(prop)) {
+                                content.push(prop + ':' + e.item[prop]);
+                            }
+                        }
+                        ui.get('subrow').setSubrowContent(content.join(', '), e.index);
+                    });
+
+                    ui.get('selectedItems').on('click', function (e) {
+                        var items = ui.get('treegrid').getSelectedItems();
+                        alert('selected items\' ids exclude children: ' + items.map(function (item) {
+                            return item.id;
+                        }));
+                    });
+
+                    ui.get('selectedItemsAll').on('click', function (e) {
+                        var items = ui.get('treegrid').getSelectedItems(true);
+                        alert('selected items\' ids include children: ' + items.map(function (item) {
+                            return item.id;
+                        }));
                     });
                 }
             );

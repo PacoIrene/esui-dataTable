@@ -1,11 +1,11 @@
 define(
     function (require) {
         var u = require('underscore');
-        var lib = require('esui/lib');
         var Control = require('esui/Control');
         var painters = require('esui/painters');
         var esui = require('esui/main');
         var eoo = require('eoo');
+        var lib = require('esui/lib');
         var $ = require('jquery');
         var Event = require('mini-event');
         // page客户端分页 与 全选 全不选 存在性能问题
@@ -95,6 +95,40 @@ define(
                 },
 
                 /**
+                 * 设置指定行号选中
+                 *
+                 * @param {Object|Array} indexes 行号数组
+                 * @param {boolean} isSelected 是否选中
+                 */
+                setRowsSelected: function (indexes, isSelected) {
+                    if (this.select === 'multi') {
+                        isSelected
+                            ? this.dataTable.rows(indexes).select()
+                            : this.dataTable.rows(indexes).deselect();
+                    }
+                },
+
+                /**
+                 * 设置行选中
+                 *
+                 * @param {number|Array} index 行号
+                 * @param {boolean} isSelected 是否选中
+                 * @public
+                 */
+                setRowSelected: function (index, isSelected) {
+                    if (this.select !== 'multi' && this.select !== 'single') {
+                        return;
+                    }
+                    isSelected ? this.dataTable.row(index).select() : this.dataTable.row(index).deselect();
+                    if (isAllRowSelected(this)) {
+                        $('tr', this.dataTable.table().header()).addClass('selected');
+                    }
+                    else {
+                        $('tr', this.dataTable.table().header()).removeClass('selected');
+                    }
+                },
+
+                /**
                  * 获取Table的选中数据项
                  *
                  * @public
@@ -102,6 +136,15 @@ define(
                  */
                 getSelectedItems: function () {
                     return this.dataTable.rows({selected: true}).data().toArray();
+                },
+
+                /**
+                 * 获取选中的行号
+                 *
+                 * @return {Array}
+                 */
+                getSelectedIndexes: function () {
+                    return this.dataTable.rows({selected: true}).indexes().toArray();
                 },
 
                 /**
@@ -240,22 +283,25 @@ define(
                         var index = dataTable.row(this).index();
                         var eventArgs = {
                             index: index,
-                            item: dataTable.row(index).data()
+                            item: dataTable.row(index).data(),
+                            dataTable: dataTable
                         };
-                        $(dataTable.cell(this).node()).removeClass('details-control');
-                        $(dataTable.cell(this).node()).addClass('details-control-open');
+                        var td = $(dataTable.cell(this).node());
+                        td.removeClass('details-control').addClass('details-control-open');
+                        td.html(that.minusIcon);
                         that.fire('subrowopen', eventArgs);
-                        dataTable.row(index).child().show();
                     });
 
                     dataTable.on('click', 'td.details-control-open', function (e) {
                         var index = dataTable.row(this).index();
                         var eventArgs = {
                             index: index,
-                            item: dataTable.row(index).data()
+                            item: dataTable.row(index).data(),
+                            dataTable: dataTable
                         };
-                        $(dataTable.cell(this).node()).removeClass('details-control-open');
-                        $(dataTable.cell(this).node()).addClass('details-control');
+                        var td = $(dataTable.cell(this).node());
+                        td.removeClass('details-control-open').addClass('details-control');
+                        td.html(that.plusIcon);
                         that.fire('subrowclose', eventArgs);
                         dataTable.row(index).child().hide();
                     });
@@ -295,6 +341,66 @@ define(
                     }, this));
                 },
 
+                initDataTable: function (cNode, table, datasource, fields) {
+                    var options = {
+                        dom: 'rtipl',
+                        data: datasource,
+                        info: false,
+                        searching: false,
+                        paging: table.clientPaging,
+                        processing: true,
+                        ordering: false,
+                        scrollX: true,
+                        scrollY: table.scrollY,
+                        scrollBarVis: true,
+                        scrollCollapse: true,
+                        select: table.select,
+                        language: {
+                            emptyTable: table.noDataHtml,
+                            paginate: {
+                                previous: table.pagePrevious,
+                                next: table.pageNext
+                            },
+                            processing: table.processingText,
+                            lengthMenu: table.lengthMenu
+                        },
+                        treeGrid: {
+                            left: table.treeGridLeft,
+                            expandIcon: table.plusIcon,
+                            collapseIcon: table.minusIcon
+                        },
+                        fixedColumns: false,
+                        colReorder: table.colReorder,
+                        autoWidth: table.autoWidth,
+                        columnDefs: getColumnDefs(table, fields)
+                    };
+                    return $(cNode).DataTable(u.extend(options, table.extendOptions));
+                },
+
+                setSubrowContent: function (content, index) {
+                    this.dataTable.row(index).child(content).show();
+                },
+
+                getSubrowContainer: function (index) {
+                    return this.getChild('subrow-panel-' + index);
+                },
+
+                addRowBuilders: function () {},
+
+                addHandlers: function () {},
+
+                resetBodyClass: function (table, fields) {
+                    resetBodyClass(table, fields);
+                },
+
+                resetSelect: function (table, select) {
+                    resetSelect(table, select);
+                },
+
+                resetSelectMode: function (table, selectMode) {
+                    resetSelectMode(table, selectMode);
+                },
+
                 /**
                  * 渲染自身
                  *
@@ -310,39 +416,13 @@ define(
                                 table.dataTable.destroy(true);
                             }
                             var isComplexHead = analysizeFields(fields).isComplexHead;
-                            var headHTML = isComplexHead ? withComplexHeadHTML(fields)
-                                            : simpleHeadHTML(fields);
+                            var headHTML = isComplexHead ? withComplexHeadHTML(table, fields)
+                                            : simpleHeadHTML(table, fields);
                             var footHTML = createFooterHTML(table, foot);
                             var cNode = $.parseHTML('<table class="display dtr-inline" cellspacing="0" width="100%">'
                                         + headHTML + footHTML + '<tbody></tbody></table>');
                             $(cNode).appendTo(table.main);
-                            var options = {
-                                dom: 'rtipl',
-                                data: datasource,
-                                info: false,
-                                searching: false,
-                                paging: table.clientPaging,
-                                processing: true,
-                                ordering: false,
-                                scrollX: true,
-                                scrollY: table.scrollY,
-                                scrollBarVis: true,
-                                scrollCollapse: true,
-                                language: {
-                                    emptyTable: table.noDataHtml,
-                                    paginate: {
-                                        previous: table.pagePrevious,
-                                        next: table.pageNext
-                                    },
-                                    processing: table.processingText,
-                                    lengthMenu: table.lengthMenu
-                                },
-                                fixedColumns: false,
-                                colReorder: table.colReorder,
-                                autoWidth: table.autoWidth,
-                                columnDefs: getColumnDefs(table, fields)
-                            };
-                            var dataTable = $(cNode).DataTable(u.extend(options, table.extendOptions));
+                            var dataTable = table.initDataTable(cNode, table, datasource, fields);
                             table.dataTable = dataTable;
                             table.helper.initChildren(dataTable.table().header());
                             resetBodyClass(table, fields);
@@ -391,36 +471,6 @@ define(
                         }
                     }
                 ),
-
-                setSubrowContent: function (content, index) {
-                },
-
-                getSubrowContainer: function (index) {
-                },
-
-                /**
-                 * 设置行选中
-                 *
-                 * @param {number|Array} index 行号
-                 * @param {boolean} isSelected 是否选中
-                 * @public
-                 */
-                setRowSelected: function (index, isSelected) {
-                    if (this.select !== 'multi' && this.select !== 'single') {
-                        return;
-                    }
-                    isSelected ? this.dataTable.row(index).select() : this.dataTable.row(index).deselect();
-                    if (isAllRowSelected(this)) {
-                        $('tr', this.dataTable.table().header()).addClass('selected');
-                    }
-                    else {
-                        $('tr', this.dataTable.table().header()).removeClass('selected');
-                    }
-                },
-
-                addRowBuilders: function () {},
-
-                addHandlers: function () {},
 
                 /**
                  * 设置fixed的header
@@ -537,6 +587,7 @@ define(
          * @return {Array} columns
          */
         function getColumnDefs(table, fields) {
+            var index = 0;
             var selectClass = table.helper.getPartClasses('selector-indicator');
             if (table.select === 'multi') {
                 selectClass += ' ui-checkbox-custom';
@@ -549,14 +600,42 @@ define(
                 defaultContent: '<div class="' + selectClass + '">'
                                 + '<label></label></div>',
                 width: table.selectColumnWidth,
-                targets: 0
+                targets: index++
             }];
+            if (table.subEntry) {
+                columns.push({
+                    className: 'details-control',
+                    orderable: false,
+                    data: function (item) {
+                        if (item.subrow) {
+                            return table.plusIcon;
+                        }
+                        return null;
+                    },
+                    width: table.subEntryColumnWidth,
+                    targets: index++
+                });
+            }
+            if (table.treeGrid) {
+                columns.push({
+                    className: 'treegrid-control',
+                    orderable: false,
+                    data: function (item) {
+                        if (item.children && item.children.length) {
+                            return table.plusIcon;
+                        }
+                        return null;
+                    },
+                    width: table.treeGridColumnWidth,
+                    targets: index++
+                });
+            }
 
             var actualFields = analysizeFields(fields).fields;
-            u.each(actualFields, function (field, index) {
+            u.each(actualFields, function (field) {
                 var column = {
                     data: field.content,
-                    targets: index + 1
+                    targets: index++
                 };
                 if (field.width) {
                     column.width = field.width;
@@ -629,37 +708,38 @@ define(
          * @param {boolean} select 是否select
          */
         function resetSelect(table, select) {
-            table.dataTable.rows().deselect();
+            var dataTable = table.dataTable;
+            dataTable.rows().deselect();
 
-            var operationColumn = $(table.dataTable.column(0).nodes());
+            var operationColumn = $(dataTable.column(0).nodes());
             var selectColumnClass = table.helper.getPartClasses('select-column');
 
             operationColumn.children(table.helper.getPartClasses('selector-indicator'))
-                            .removeClass('ui-checkbox-custom ui-radio-custom');
-            $(table.dataTable.column(0).header()).removeClass('select-checkbox');
-            $(table.dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
+                .removeClass('ui-checkbox-custom ui-radio-custom');
+            $(dataTable.column(0).header()).removeClass('select-checkbox');
+            $(dataTable.column(0).header()).find('.ui-checkbox-custom').remove();
 
             operationColumn.addClass(selectColumnClass + ' dt-body-center');
 
             if (!select) {
                 select = 'api';
-                table.dataTable.column(0).visible(false);
+                dataTable.column(0).visible(false);
             }
             else {
-                table.dataTable.column(0).visible(true);
+                dataTable.column(0).visible(true);
                 resetSelectMode(table, table.selectMode);
             }
             if (select === 'multi') {
-                $(table.dataTable.column(0).header()).addClass('select-checkbox');
-                $(table.dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
+                $(dataTable.column(0).header()).addClass('select-checkbox');
+                $(dataTable.column(0).header()).append('<div class="ui-checkbox-custom"><label></label></div>');
                 operationColumn.children(table.helper.getPartClasses('selector-indicator'))
-                                .addClass('ui-checkbox-custom');
+                    .addClass('ui-checkbox-custom');
             }
             else if (select === 'single') {
                 operationColumn.children(table.helper.getPartClasses('selector-indicator'))
-                            .addClass('ui-radio-custom');
+                    .addClass('ui-radio-custom');
             }
-            table.dataTable.select.style(select).fixedColumns().relayout();
+            dataTable.select && dataTable.select.style(select).fixedColumns().relayout();
         }
 
         /**
@@ -670,15 +750,16 @@ define(
          * @param {string} selectMode 选择器的type
          */
         function resetSelectMode(table, selectMode) {
+            var dataTable = table.dataTable;
             if (selectMode === 'box') {
                 var selector = 'td:first-child.' + table.helper.getPartClasses('select-column') + '>.'
                                 + table.helper.getPartClasses('selector-indicator');
                 table.dataTable.select.selector(selector);
             }
             else if (selectMode === 'line') {
-                table.dataTable.select.selector('td');
+                dataTable.select.selector('td');
             }
-            table.dataTable.fixedColumns().relayout();
+            dataTable.fixedColumns().relayout();
         }
 
         /**
@@ -714,9 +795,9 @@ define(
          * @return {boolean} 是否全选
          */
         function isAllRowSelected(table) {
-            var datasource = table.datasource;
-            var selectedItems = table.getSelectedItems();
-            return selectedItems.length === datasource.length;
+            var rows = $(table.dataTable.body()).find('tr[role="row"]');
+            var selectedIndexes = table.getSelectedIndexes();
+            return selectedIndexes.length === rows.length;
         }
 
         /**
@@ -772,14 +853,24 @@ define(
          * 构建带有复合表头head的html
          *
          * @private
+         * @param {ui.DataTable} table table控件实例
          * @param {Array} fields field的配置
          * @return {string} html
          */
-        function withComplexHeadHTML(fields) {
+        function withComplexHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
-            html.push('<th rowspan="2" class="select-checkbox dt-head-center"></th>');
             var subHtml = ['<tr>'];
+            var subEntry = table.subEntry;
+            var treeGrid = table.treeGrid;
+            html.push('<th rowspan="2" class="select-checkbox dt-head-center"></th>');
+            if (subEntry) {
+                html.push('<th rowspan="2" class="details-control"></th>');
+            }
+            if (treeGrid) {
+                html.push('<th rowspan="2" class="treeGrid-control"></th>');
+            }
+            fields = fields || table.fields;
             u.each(fields, function (field) {
                 if (!field.children) {
                     html.push('<th rowspan="2" class="' + getFieldHeaderClass(field)
@@ -805,13 +896,23 @@ define(
          * 构建正常head的html
          *
          * @private
+         * @param {ui.DataTable} table table控件实例
          * @param {Array} fields field的配置
          * @return {string} html
          */
-        function simpleHeadHTML(fields) {
+        function simpleHeadHTML(table, fields) {
             var HeadHTML = '<thead>';
             var html = ['<tr>'];
+            var subEntry = table.subEntry;
+            var treeGrid = table.treeGrid;
             html.push('<th rowspan="1" class="select-checkbox dt-head-center"></th>');
+            if (subEntry) {
+                html.push('<th rowspan="1" class="details-control"></th>');
+            }
+            if (treeGrid) {
+                html.push('<th rowspan="1" class="treegrid-control"></th>');
+            }
+            fields = fields || table.fields;
             u.each(fields, function (field) {
                 html.push('<th rowspan="1" class="' + getFieldHeaderClass(field)
                         + '" data-field-id="' + field.field + '">' + createHeadTitle(field) + '</th>');
@@ -846,6 +947,14 @@ define(
             }
             var html = '<tfoot><tr>';
             var rows = [];
+            var subEntry = table.subEntry;
+            var treeGrid = table.treeGrid;
+            if (subEntry) {
+                rows.push('<th rowspan="1" class="details-control"></th>');
+            }
+            if (treeGrid) {
+                rows.push('<th rowspan="1" class="treegrid-control"></th>');
+            }
             u.each(foot, function (item) {
                 var content = item.content || '';
                 if (typeof item.content === 'function') {
@@ -896,8 +1005,14 @@ define(
             select: '',
             selectMode: 'box',
             subEntry: false,
+            treeGrid: false,
+            treeGridLeft: 12,
             autoWidth: false,
             selectColumnWidth: 35,
+            subEntryColumnWidth: 5,
+            treeGridColumnWidth: 5,
+            plusIcon: '<span class="ui-icon-plus-circle ui-eicons-fw"></span>',
+            minusIcon: '<span class="ui-icon-minus-circle ui-eicons-fw"></span>',
             colReorder: false,
             leftFixedColumns: 0,
             rightFixedColumns: 0,
